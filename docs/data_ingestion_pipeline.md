@@ -1,5 +1,5 @@
-## Data Ingestion Pipeline
-### Dataset
+# Data Ingestion Pipeline
+## Dataset
 - **Source**
 - **Time Range**
 - **Demand Granularity**
@@ -7,7 +7,7 @@
 - **Relevant Columns/Values**
 - **Known Limitations**
 
-### Pipeline
+## Pipeline
 - **Loading**
 - **Schema Validation**
 - **Missing-period Handling**
@@ -15,7 +15,8 @@
 - **Demand Aggregation**
 - **Train, Validation, and Test Splits**
 - **Leakage Prevention**
-### Exploratory Data Analysis
+
+## Exploratory Data Analysis
 - **Demand Distributions**
 - **Trend and Seasonality**
 - **Zero-demand Periods**

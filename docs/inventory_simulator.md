@@ -1,13 +1,20 @@
-# Demand Forecasting and Inventory Policy Simulation
+# Inventory Simulator
+## Simulator Assumptions and Design
 
-## Inventory Simulator
-### Simulator Assumptions
-### Simulator State
+- **Time and Event Sequence**
+- **Demand and Stockout Handling**
+- **Lead Time**
+Assume fixed lead time of 5 days. 
+- **Initial Inventory**
+- **Cost Assumptions**
+- **Information Available to each Policy**
+
+## Simulator State
 - **On-hand Inventory**
 - **On-order Inventory**
 - **Inventory Position**
 - **Outstanding Backorders (Stretch)**
-### Period Event Sequence
+## Period Event Sequence
 1. Receive scheduled orders
 2. Observe available information
 3. Make a replenishment decision
@@ -15,7 +22,7 @@
 5. Record fulfilled and unmet demand
 6. Calculate inventory and costs
 
-### Simulator Validation
+## Simulator Validation
 - **Hand-calculated test scenarios**
 - **Invariant checks**
 - **Unit Tests**

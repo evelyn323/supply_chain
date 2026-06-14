@@ -17,12 +17,12 @@ The project consists of five main components:
 5. **Sensitivity Analysis**: Test how results change under different lead times, safety-stock levels, and stockout penalties.
 
 ## Documentation
-- [Project Design](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/project_design.md)
 - [Data Ingestion Pipeline](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/data_ingestion_pipeline.md)
 - [Inventory Simulator](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_simulator.md)
 - [Inventory Policies](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_policies.md)
 - [Demand Forecasting](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md)
 - [Policy Evaluation](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/policy_evaluation.md)
+- [Experiments](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/experiments.md)
 - [Results](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/results.md)
 - [Limitations](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/limitations.md)
 

@@ -1,6 +1,4 @@
-# Demand Forecasting and Inventory Policy Simulation
-
-## Limitations
+# Limitations
 The project does not include the following
 - Supplier capacity constraints
 - Multi-echelon inventory networks
