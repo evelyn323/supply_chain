@@ -16,6 +16,15 @@ The project consists of five main components:
 4. **Inventory Policy Comparisons**: Compare inventory policies using cost and service metrics.
 5. **Sensitivity Analysis**: Test how results change under different lead times, safety-stock levels, and stockout penalties.
 
+## MVP Scope
+The current MVP focuses on simulating a single SKU under a fixed lead time and safety-stock assumption. Stockouts are modeled as lost sales, with no backorders.
+
+Sensitivity analysis will vary fixed lead time, safety stock, stockout penalty, and holding cost.
+
+Core evaluation metrics include unit fill rate, stockout days, holding cost, stockout penalty, and total cost.
+
+More informtion about assumptions and extensions are in the detailed documentation files.
+
 ## Documentation
 - [Data Ingestion Pipeline](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/data_ingestion_pipeline.md)
 - [Inventory Simulator](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_simulator.md)
