@@ -17,11 +17,27 @@ The project consists of five main components:
 5. **Sensitivity Analysis**: Test how results change under different lead times, safety-stock levels, and stockout penalties.
 
 ## MVP Scope
-The current MVP focuses on simulating a single SKU under a fixed lead time and safety-stock assumption. Stockouts are modeled as lost sales, with no backorders.
+The minimum strong version of the project simulates one M5 `store x item` series under a fixed-lead-time, lost-sales inventory simulator with fixed holding cost and stockout penalty assumptions.
 
-Sensitivity analysis will vary fixed lead time, safety stock, stockout penalty, and holding cost.
+The MVP compares a fixed-quantity periodic reorder naive baseline, a fixed reorder-point policy, an order-up-to policy with a fixed target, and a forecast-driven order-up-to policy using at least naive last value and moving average forecasts.
 
-Core evaluation metrics include unit fill rate, stockout days, holding cost, stockout penalty, and total cost.
+Sensitivity analysis varies fixed lead time, safety stock, stockout penalty, and holding cost.
+
+Core evaluation metrics include unit fill rate, stockout days, holding cost, stockout penalty, and total cost. Forecast accuracy is evaluated with RMSE.
+
+## Stretch Goals
+- Add richer forecasting models, including models that use price and promotion covariates. For example, the zero-shot `Chronos2` forecasting model.
+- Extend the analysis to 2-3 additional SKUs with different demand patterns.
+
+## Out of Scope
+- Supplier capacity constraints
+- Multi-echelon inventory networks
+- Product substitution
+- Quantity discounts
+- Dynamic pricing
+- Real-time production scheduling
+- Backorders
+- Multi-store optimization
 
 More informtion about assumptions and extensions are in the detailed documentation files.
 
@@ -36,5 +52,13 @@ More informtion about assumptions and extensions are in the detailed documentati
 - [Limitations](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/limitations.md)
 
 ## Repository Structure
+- `src/data/`: data loading, validation, and preprocessing
+- `src/forecasting/`: forecast baselines and forecasting models
+- `src/simulation/`: inventory simulator logic
+- `src/policies/`: replenishment policy implementations
+- `src/evaluation/`: forecast and policy evaluation utilities
+- `tests/`: automated tests
+- `data/raw/`: raw downloaded data
+- `data/processed/`: cleaned or transformed data artifacts
 
 ## Setup and Usage

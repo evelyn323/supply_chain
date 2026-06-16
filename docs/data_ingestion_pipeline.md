@@ -33,6 +33,6 @@ The data is from the M5 Forecasting Kaggle competition [github link](https://git
 - **SKU Selection or Segmentation**
 - **MVP SKU**
 `FOODS_3_080` at store `CA_1` is used as the MVP series. It has a full history, very few zero-sales days, and moderate daily volume, making it a clean single-SKU starting point for forecasting and inventory simulation.
-- **Optional Stretch SKUs**
+- **Stretch SKUs**
 `FOODS_3_282` at `CA_3` is considered as an intermittent-demand stretch SKU because it has many zero-sales days and is useful for testing sparse-demand behavior.
 `HOUSEHOLD_1_474` at `TX_2` is used as a spikier stretch SKU because it has larger demand spikes and offers a contrasting demand pattern outside the main food example.
