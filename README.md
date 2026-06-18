@@ -60,5 +60,12 @@ More informtion about assumptions and extensions are in the detailed documentati
 - `tests/`: automated tests
 - `data/raw/`: raw downloaded data
 - `data/processed/`: cleaned or transformed data artifacts
+- `notebooks`: exploratory Jupyter notebooks for dataset inspection, EDA, and early prototyping before logic is moved into reusable Python modules
 
 ## Setup and Usage
+The project uses a Conda environment defined in [environment.yml](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/environment.yml).
+
+```bash
+conda env create -f environment.yml
+conda activate supply-chain
+```

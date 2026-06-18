@@ -1,0 +1,13 @@
+name: supply-chain
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - jupyterlab
+  - matplotlib
+  - seaborn
+  - pyarrow
+  - pytest
+  - scikit-learn
