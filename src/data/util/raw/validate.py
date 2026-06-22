@@ -73,7 +73,8 @@ def validate_sales(df: pd.DataFrame) -> None:
         raise ValueError("Sales day columns are not continuous")
     
     # check numeric, non-negative, and non-null
-    is_valid = pd.to_numeric(df[day_cols], errors='coerce').ge(0).fillna(False)
+    numeric_days = df[day_cols].apply(pd.to_numeric, errors="coerce")
+    is_valid = numeric_days.ge(0).fillna(False)
     if not is_valid.all().all():
         invalid_row_ids = df[~is_valid.all(axis=1)].index.tolist()
         raise ValueError(f"Invalid value in rows: {invalid_row_ids}")
