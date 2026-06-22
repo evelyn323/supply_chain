@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 from src.data.types import RawData
 
-def load_raw_data(dir: str | Path) -> RawData:
+def load_raw(dir: str | Path) -> RawData:
     """
     Load the raw data from the directory into pandas dataframe
     """

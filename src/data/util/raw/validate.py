@@ -96,7 +96,7 @@ def validate_prices(df: pd.DataFrame) -> None:
         raise ValueError(f"Invalid value in rows: {invalid_row_ids}")
 
 
-def validate_raw_data(raw: RawData) -> None:
+def validate_raw(raw: RawData) -> None:
     validate_calendar(raw.calendar)
     validate_sales(raw.sales)
     validate_prices(raw.wk_prices)

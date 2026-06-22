@@ -6,3 +6,8 @@ class RawData:
     calendar: pd.DataFrame
     sales: pd.DataFrame
     wk_prices: pd.DataFrame
+
+@dataclass
+class SKU:
+    item_id: str
+    store_id: str
