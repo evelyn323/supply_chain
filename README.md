@@ -69,3 +69,25 @@ The project uses a Conda environment defined in [environment.yml](/Users/evelync
 conda env create -f environment.yml
 conda activate supply-chain
 ```
+
+Generate the processed daily dataset for the MVP SKU:
+
+```bash
+python -m src.data.build_processed --item-id FOODS_3_080 --store-id CA_1
+```
+
+This saves the processed daily series to `data/processed/m5_foods_3_080_ca_1_daily.csv` by default.
+
+Generate chronological train, validation, and test splits from a processed SKU series:
+
+```bash
+python -m src.data.build_splits --item-id FOODS_3_080 --store-id CA_1
+```
+
+By default, the split fractions come from `prepare_splits`. You can optionally override either held-out fraction from the CLI:
+
+```bash
+python -m src.data.build_splits --item-id FOODS_3_080 --store-id CA_1 --val-frac 0.2 --test-frac 0.1
+```
+
+This saves `train.csv`, `validation.csv`, and `test.csv` under `data/splits/m5_foods_3_080_ca_1/` by default.
