@@ -1,4 +1,5 @@
 data/raw/
 data/processed/
+data/splits/
 __pycache__/
 *.py[cod]
