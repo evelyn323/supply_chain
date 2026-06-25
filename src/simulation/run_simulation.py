@@ -24,6 +24,8 @@ def run_simulation(
         eval_df: pd.DataFrame,
         config: SimulationConfig,
 ):
+    required_history = get_required_history(config)
+
     # sort/cleanup the demand series / chosen split
     eval_df = eval_df.copy()
     history_df = history_df.copy()
@@ -31,9 +33,29 @@ def run_simulation(
     history_df["date"] = pd.to_datetime(history_df["date"])
     eval_df = eval_df.sort_values(by="date", ascending=True)
     history_df = history_df.sort_values(by="date", ascending=True)
-    # TODO: Use required_history to find the first eligible evaluation date.
-    required_history = get_required_history(config)
-    _ = required_history
+    requested_eval_start = eval_df.iloc[0]["date"]
+    requested_eval_end = eval_df.iloc[-1]["date"]
+    history_df, eval_df = get_eligible_history_and_eval(
+        history_df,
+        eval_df,
+        required_history,
+    )
+
+    if eval_df.empty:
+        raise ValueError("No eligible evaluation dates found for the requested history")
+
+    print(
+        "Required history:",
+        required_history,
+        "| requested eval window:",
+        requested_eval_start,
+        "to",
+        requested_eval_end,
+        "| eligible eval window:",
+        eval_df.iloc[0]["date"],
+        "to",
+        eval_df.iloc[-1]["date"],
+    )
 
     # initialize simulator state at first eval_date
     # TODO: Replace the dummy initializer with the chosen policy-specific rule.
@@ -128,6 +150,28 @@ def get_required_history(config: SimulationConfig) -> int:
     )
 
 
+def get_eligible_history_and_eval(
+    history_df: pd.DataFrame,
+    eval_df: pd.DataFrame,
+    required_history: int,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Shift the simulated eval window forward until enough prior history is available for both initialization and the selected policy.
+    """
+    if required_history <= 0:
+        return history_df, eval_df
+
+    for idx, row in eval_df.iterrows():
+        current_date = row["date"]
+        available_history = get_available_history(history_df, eval_df, current_date)
+        if len(available_history) >= required_history:
+            eligible_history_df = available_history
+            eligible_eval_df = eval_df.loc[idx:].copy()
+            return eligible_history_df, eligible_eval_df
+
+    return history_df, eval_df.iloc[0:0].copy()
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build saved train, validation, and test splits for one processed SKU series."
@@ -169,6 +213,8 @@ def parse_args() -> argparse.Namespace:
     )
 
     return parser.parse_args()
+
+
 def main() -> None:
     args = parse_args()
     sku = SKU(args.item_id, args.store_id)
