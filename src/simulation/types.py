@@ -27,9 +27,18 @@ class PolicyConfig:
 
 
 @dataclass
+class SimulationAssumptions:
+    lead_time_days: int = 5
+    safety_stock: float = 40.0
+    holding_cost: float = 0.10
+    stockout_penalty: float = 2.00
+
+
+@dataclass
 class SimulationConfig:
     initial_state_config: InitialStateConfig
     policy_config: PolicyConfig
+    assumptions: SimulationAssumptions
 
 
 @dataclass

@@ -15,6 +15,7 @@ from src.simulation.types import (
     OutstandingOrder,
     PolicyOption,
     SimulationConfig,
+    SimulationAssumptions,
     SimulatorState,
 )
 
@@ -67,13 +68,12 @@ def run_simulation(
         # receive scheduled orders and update on hand inventory
         receive_scheduled_orders(state)
         # observe available information/current state
-        # TODO: Decide whether policies observe full prior eval history
         available_history = get_available_history(history_df, eval_df, state.current_date)
         # make replenishment decision
         # TODO: Replace the dummy replenishment decision with the selected policy logic.
         order_qty = decide_replenishment(available_history, state, config)
         # schedule any new replenishment order
-        schedule_replenishment(state, order_qty)
+        schedule_replenishment(state, order_qty, config)
         # realize true demand
         fulfilled_demand, unmet_demand = realize_demand(state, row.demand)
         # record/update fulfilled and unmet demand and ending inventory
@@ -82,8 +82,7 @@ def run_simulation(
         if state.on_hand_inventory == 0:
             state.total_stockout_days += 1
         # compute costs from ending state
-        # TODO: Apply configured holding-cost and stockout-penalty rates.
-        update_daily_costs(state, unmet_demand)
+        update_daily_costs(state, unmet_demand, config)
         # TODO: Save daily results for debugging and final metric calculation.
 
     # TODO: Compute final metrics and return a simulation result object.
@@ -104,7 +103,6 @@ def get_available_history(
     eval_df: pd.DataFrame,
     current_date: pd.Timestamp,
 ) -> pd.DataFrame:
-    # TODO: Confirm whether policies should see all prior eval rows
     prior_eval_df = eval_df[eval_df["date"] < current_date]
     return pd.concat([history_df, prior_eval_df], ignore_index=True)
 
@@ -112,14 +110,17 @@ def get_available_history(
 def schedule_replenishment(
     state: SimulatorState,
     order_quantity: float,
+    config: SimulationConfig,
 ) -> None:
     if order_quantity <= 0:
         return
 
-    # TODO: Use configured lead time when scheduling replenishment arrivals.
     # TODO: Decide whether order quantities should be rounded/cast to integers.
     state.outstanding_orders.append(
-        OutstandingOrder(quantity=order_quantity, arrival_date=state.current_date)
+        OutstandingOrder(
+            quantity=order_quantity,
+            arrival_date=state.current_date + pd.Timedelta(days=config.assumptions.lead_time_days),
+        )
     )
 
 
@@ -137,10 +138,10 @@ def realize_demand(
 def update_daily_costs(
     state: SimulatorState,
     unmet_demand: float,
+    config: SimulationConfig,
 ) -> None:
-    # TODO: use ending inventory (as stated in docs) to compute the actual cost, not just 1 cost per unit?
-    state.total_holding_cost += state.on_hand_inventory
-    state.total_stockout_cost += unmet_demand
+    state.total_holding_cost += state.on_hand_inventory * config.assumptions.holding_cost
+    state.total_stockout_cost += unmet_demand * config.assumptions.stockout_penalty
 
 
 def get_required_history(config: SimulationConfig) -> int:
@@ -211,6 +212,30 @@ def parse_args() -> argparse.Namespace:
         default=PolicyOption.DUMMY,
         help="Replenishment policy option to use (dummy)",
     )
+    parser.add_argument(
+        "--lead-time-days",
+        type=int,
+        default=5,
+        help="Fixed replenishment lead time in days",
+    )
+    parser.add_argument(
+        "--holding-cost",
+        type=float,
+        default=0.10,
+        help="Holding cost per unit per day",
+    )
+    parser.add_argument(
+        "--safety-stock",
+        type=float,
+        default=40.0,
+        help="Safety stock used by policies and initial-state rules that need it",
+    )
+    parser.add_argument(
+        "--stockout-penalty",
+        type=float,
+        default=2.00,
+        help="Penalty per unmet unit of demand",
+    )
 
     return parser.parse_args()
 
@@ -221,6 +246,12 @@ def main() -> None:
     config = SimulationConfig(
         initial_state_config=get_initial_state_config(args.initial_state),
         policy_config=get_policy_config(args.policy),
+        assumptions=SimulationAssumptions(
+            lead_time_days=args.lead_time_days,
+            safety_stock=args.safety_stock,
+            holding_cost=args.holding_cost,
+            stockout_penalty=args.stockout_penalty,
+        ),
     )
     splits = load_splits(args.split_dir, sku)
     eval_df = splits.get(args.split)
