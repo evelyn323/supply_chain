@@ -6,9 +6,17 @@ from pathlib import Path
 
 from src.data.types import SKU, DataSplit
 from src.data.util.split.load import load_splits
+from src.simulation.initial_state_configs import get_initial_state_config
 from src.simulation.initial_state import init_simulator_state
+from src.simulation.policy_configs import get_policy_config
 from src.simulation.policy import decide_replenishment
-from src.simulation.types import OutstandingOrder, SimulationConfig, SimulatorState
+from src.simulation.types import (
+    InitialStateOption,
+    OutstandingOrder,
+    PolicyOption,
+    SimulationConfig,
+    SimulatorState,
+)
 
 
 def run_simulation(
@@ -23,6 +31,9 @@ def run_simulation(
     history_df["date"] = pd.to_datetime(history_df["date"])
     eval_df = eval_df.sort_values(by="date", ascending=True)
     history_df = history_df.sort_values(by="date", ascending=True)
+    # TODO: Use required_history to find the first eligible evaluation date.
+    required_history = get_required_history(config)
+    _ = required_history
 
     # initialize simulator state at first eval_date
     # TODO: Replace the dummy initializer with the chosen policy-specific rule.
@@ -110,6 +121,13 @@ def update_daily_costs(
     state.total_stockout_cost += unmet_demand
 
 
+def get_required_history(config: SimulationConfig) -> int:
+    return max(
+        config.initial_state_config.history_needed,
+        config.policy_config.history_needed,
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build saved train, validation, and test splits for one processed SKU series."
@@ -137,14 +155,27 @@ def parse_args() -> argparse.Namespace:
         default=DataSplit.TRAIN,
         help="Whether to use train, val, or test data",
     )
+    parser.add_argument(
+        "--initial-state",
+        type=InitialStateOption,
+        default=InitialStateOption.DUMMY,
+        help="Initial-state option to use (dummy)",
+    )
+    parser.add_argument(
+        "--policy",
+        type=PolicyOption,
+        default=PolicyOption.DUMMY,
+        help="Replenishment policy option to use (dummy)",
+    )
 
     return parser.parse_args()
-
-
 def main() -> None:
     args = parse_args()
     sku = SKU(args.item_id, args.store_id)
-    config = SimulationConfig()
+    config = SimulationConfig(
+        initial_state_config=get_initial_state_config(args.initial_state),
+        policy_config=get_policy_config(args.policy),
+    )
     splits = load_splits(args.split_dir, sku)
     eval_df = splits.get(args.split)
 

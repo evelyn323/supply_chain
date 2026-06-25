@@ -1,11 +1,35 @@
 from __future__ import annotations
 
-import pandas as pd
 from dataclasses import dataclass, field
+from enum import Enum
+
+import pandas as pd
+
+
+class InitialStateOption(str, Enum):
+    DUMMY = "dummy"
+
+
+class PolicyOption(str, Enum):
+    DUMMY = "dummy"
+
+
+@dataclass
+class InitialStateConfig:
+    option: InitialStateOption
+    history_needed: int = 0
+
+
+@dataclass
+class PolicyConfig:
+    option: PolicyOption
+    history_needed: int = 0
+
 
 @dataclass
 class SimulationConfig:
-    pass
+    initial_state_config: InitialStateConfig
+    policy_config: PolicyConfig
 
 
 @dataclass
