@@ -42,6 +42,22 @@ class SimulationConfig:
 
 
 @dataclass
+class DailyStateSnapshot:
+    date: pd.Timestamp
+    on_hand_inventory: float
+    outstanding_orders: str
+    total_fulfilled_demand: float
+    total_unmet_demand: float
+    total_holding_cost: float
+    total_stockout_cost: float
+    total_stockout_days: int
+    demand: float
+    fulfilled_demand: float
+    unmet_demand: float
+    stockout_day: bool
+
+
+@dataclass
 class SimulatorState:
     current_date: pd.Timestamp
     on_hand_inventory: float

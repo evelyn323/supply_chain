@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
 import pandas as pd
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from src.simulation.initial_state import init_simulator_state
 from src.simulation.policy_configs import get_policy_config
 from src.simulation.policy import decide_replenishment
 from src.simulation.types import (
+    DailyStateSnapshot,
     InitialStateOption,
     OutstandingOrder,
     PolicyOption,
@@ -24,7 +27,8 @@ def run_simulation(
         history_df: pd.DataFrame,
         eval_df: pd.DataFrame,
         config: SimulationConfig,
-):
+        snapshot_csv_path: Path | None = None,
+) -> SimulatorState:
     required_history = get_required_history(config)
 
     # sort/cleanup the demand series / chosen split
@@ -61,31 +65,115 @@ def run_simulation(
     # initialize simulator state at first eval_date
     # TODO: Replace the dummy initializer with the chosen policy-specific rule.
     state = init_simulator_state(history_df, eval_df, config)
+    snapshot_writer, snapshot_file = init_snapshot_writer(snapshot_csv_path)
 
     # start simulation loop
-    for row in eval_df.itertuples(index=False):
-        state.current_date = row.date
-        # receive scheduled orders and update on hand inventory
-        receive_scheduled_orders(state)
-        # observe available information/current state
-        available_history = get_available_history(history_df, eval_df, state.current_date)
-        # make replenishment decision
-        # TODO: Replace the dummy replenishment decision with the selected policy logic.
-        order_qty = decide_replenishment(available_history, state, config)
-        # schedule any new replenishment order
-        schedule_replenishment(state, order_qty, config)
-        # realize true demand
-        fulfilled_demand, unmet_demand = realize_demand(state, row.demand)
-        # record/update fulfilled and unmet demand and ending inventory
-        state.total_fulfilled_demand += fulfilled_demand
-        state.total_unmet_demand += unmet_demand
-        if state.on_hand_inventory == 0:
-            state.total_stockout_days += 1
-        # compute costs from ending state
-        update_daily_costs(state, unmet_demand, config)
-        # TODO: Save daily results for debugging and final metric calculation.
+    try:
+        for row in eval_df.itertuples(index=False):
+            state.current_date = row.date
+            # receive scheduled orders and update on hand inventory
+            receive_scheduled_orders(state)
+            # observe available information/current state
+            available_history = get_available_history(history_df, eval_df, state.current_date)
+            # make replenishment decision
+            # TODO: Replace the dummy replenishment decision with the selected policy logic.
+            order_qty = decide_replenishment(available_history, state, config)
+            # schedule any new replenishment order
+            schedule_replenishment(state, order_qty, config)
+            # realize true demand
+            fulfilled_demand, unmet_demand = realize_demand(state, row.demand)
+            # record/update fulfilled and unmet demand and ending inventory
+            state.total_fulfilled_demand += fulfilled_demand
+            state.total_unmet_demand += unmet_demand
+            if state.on_hand_inventory == 0:
+                state.total_stockout_days += 1
+            # compute costs from ending state
+            update_daily_costs(state, unmet_demand, config)
+            snapshot = DailyStateSnapshot(
+                date=state.current_date,
+                on_hand_inventory=state.on_hand_inventory,
+                outstanding_orders=serialize_outstanding_orders(state.outstanding_orders),
+                total_fulfilled_demand=state.total_fulfilled_demand,
+                total_unmet_demand=state.total_unmet_demand,
+                total_holding_cost=state.total_holding_cost,
+                total_stockout_cost=state.total_stockout_cost,
+                total_stockout_days=state.total_stockout_days,
+                demand=row.demand,
+                fulfilled_demand=fulfilled_demand,
+                unmet_demand=unmet_demand,
+                stockout_day=state.on_hand_inventory == 0,
+            )
+            write_snapshot_row(snapshot_writer, snapshot)
+    finally:
+        if snapshot_file is not None:
+            snapshot_file.close()
 
     # TODO: Compute final metrics and return a simulation result object.
+    return state
+
+
+def init_snapshot_writer(
+    snapshot_csv_path: Path | None,
+) -> tuple[csv.DictWriter | None, object | None]:
+    if snapshot_csv_path is None:
+        return None, None
+
+    snapshot_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_file = snapshot_csv_path.open("w", newline="", encoding="utf-8")
+    fieldnames = [
+        "date",
+        "on_hand_inventory",
+        "outstanding_orders",
+        "total_fulfilled_demand",
+        "total_unmet_demand",
+        "total_holding_cost",
+        "total_stockout_cost",
+        "total_stockout_days",
+        "demand",
+        "fulfilled_demand",
+        "unmet_demand",
+        "stockout_day",
+    ]
+    writer = csv.DictWriter(snapshot_file, fieldnames=fieldnames)
+    writer.writeheader()
+    return writer, snapshot_file
+
+
+def serialize_outstanding_orders(outstanding_orders: list[OutstandingOrder]) -> str:
+    return json.dumps(
+        [
+            {
+                "quantity": order.quantity,
+                "arrival_date": order.arrival_date.isoformat(),
+            }
+            for order in outstanding_orders
+        ]
+    )
+
+
+def write_snapshot_row(
+    snapshot_writer: csv.DictWriter | None,
+    snapshot: DailyStateSnapshot,
+) -> None:
+    if snapshot_writer is None:
+        return
+
+    snapshot_writer.writerow(
+        {
+            "date": snapshot.date.isoformat(),
+            "on_hand_inventory": snapshot.on_hand_inventory,
+            "outstanding_orders": snapshot.outstanding_orders,
+            "total_fulfilled_demand": snapshot.total_fulfilled_demand,
+            "total_unmet_demand": snapshot.total_unmet_demand,
+            "total_holding_cost": snapshot.total_holding_cost,
+            "total_stockout_cost": snapshot.total_stockout_cost,
+            "total_stockout_days": snapshot.total_stockout_days,
+            "demand": snapshot.demand,
+            "fulfilled_demand": snapshot.fulfilled_demand,
+            "unmet_demand": snapshot.unmet_demand,
+            "stockout_day": snapshot.stockout_day,
+        }
+    )
 
 
 def receive_scheduled_orders(state: SimulatorState) -> None:
@@ -195,6 +283,12 @@ def parse_args() -> argparse.Namespace:
         help="Directory containing split train val test data",
     )
     parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/simulation"),
+        help="Directory to save daily simulation snapshots",
+    )
+    parser.add_argument(
         "--split",
         type=DataSplit,
         default=DataSplit.TRAIN,
@@ -262,8 +356,12 @@ def main() -> None:
     if args.split == DataSplit.TEST:
         history_df = pd.concat([history_df, splits.get(DataSplit.VAL)])
 
-
-    run_simulation(history_df, eval_df, config)
+    snapshot_csv_path = (
+        args.output_dir
+        / f"m5_{sku.item_id.lower()}_{sku.store_id.lower()}"
+        / f"{args.split.value}_daily_snapshots.csv"
+    )
+    run_simulation(history_df, eval_df, config, snapshot_csv_path=snapshot_csv_path)
 
 
 
