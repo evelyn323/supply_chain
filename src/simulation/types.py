@@ -42,6 +42,22 @@ class SimulationConfig:
 
 
 @dataclass
+class SimulationMetrics:
+    eval_start_date: pd.Timestamp
+    eval_end_date: pd.Timestamp
+    num_eval_days: int
+    total_demand: float
+    total_fulfilled_demand: float
+    total_unmet_demand: float
+    fill_rate: float
+    stockout_days: int
+    total_holding_cost: float
+    total_stockout_cost: float
+    total_cost: float
+    ending_inventory: float
+
+
+@dataclass
 class DailyStateSnapshot:
     date: pd.Timestamp
     on_hand_inventory: float

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import json
 import pandas as pd
 from pathlib import Path
 
@@ -12,13 +10,22 @@ from src.simulation.initial_state_configs import get_initial_state_config
 from src.simulation.initial_state import init_simulator_state
 from src.simulation.policy_configs import get_policy_config
 from src.simulation.policy import decide_replenishment
+from src.simulation.util.aggregate import (
+    aggregate_final_metrics,
+    print_final_metrics,
+)
+from src.simulation.util.daily import (
+    build_daily_snapshot,
+    init_snapshot_writer,
+    write_snapshot_row,
+)
 from src.simulation.types import (
-    DailyStateSnapshot,
     InitialStateOption,
     OutstandingOrder,
     PolicyOption,
     SimulationConfig,
     SimulationAssumptions,
+    SimulationMetrics,
     SimulatorState,
 )
 
@@ -28,7 +35,7 @@ def run_simulation(
         eval_df: pd.DataFrame,
         config: SimulationConfig,
         snapshot_csv_path: Path | None = None,
-) -> SimulatorState:
+) -> SimulationMetrics:
     required_history = get_required_history(config)
 
     # sort/cleanup the demand series / chosen split
@@ -89,91 +96,20 @@ def run_simulation(
                 state.total_stockout_days += 1
             # compute costs from ending state
             update_daily_costs(state, unmet_demand, config)
-            snapshot = DailyStateSnapshot(
-                date=state.current_date,
-                on_hand_inventory=state.on_hand_inventory,
-                outstanding_orders=serialize_outstanding_orders(state.outstanding_orders),
-                total_fulfilled_demand=state.total_fulfilled_demand,
-                total_unmet_demand=state.total_unmet_demand,
-                total_holding_cost=state.total_holding_cost,
-                total_stockout_cost=state.total_stockout_cost,
-                total_stockout_days=state.total_stockout_days,
+            snapshot = build_daily_snapshot(
+                state,
                 demand=row.demand,
                 fulfilled_demand=fulfilled_demand,
                 unmet_demand=unmet_demand,
-                stockout_day=state.on_hand_inventory == 0,
             )
             write_snapshot_row(snapshot_writer, snapshot)
     finally:
         if snapshot_file is not None:
             snapshot_file.close()
 
-    # TODO: Compute final metrics and return a simulation result object.
-    return state
-
-
-def init_snapshot_writer(
-    snapshot_csv_path: Path | None,
-) -> tuple[csv.DictWriter | None, object | None]:
-    if snapshot_csv_path is None:
-        return None, None
-
-    snapshot_csv_path.parent.mkdir(parents=True, exist_ok=True)
-    snapshot_file = snapshot_csv_path.open("w", newline="", encoding="utf-8")
-    fieldnames = [
-        "date",
-        "on_hand_inventory",
-        "outstanding_orders",
-        "total_fulfilled_demand",
-        "total_unmet_demand",
-        "total_holding_cost",
-        "total_stockout_cost",
-        "total_stockout_days",
-        "demand",
-        "fulfilled_demand",
-        "unmet_demand",
-        "stockout_day",
-    ]
-    writer = csv.DictWriter(snapshot_file, fieldnames=fieldnames)
-    writer.writeheader()
-    return writer, snapshot_file
-
-
-def serialize_outstanding_orders(outstanding_orders: list[OutstandingOrder]) -> str:
-    return json.dumps(
-        [
-            {
-                "quantity": order.quantity,
-                "arrival_date": order.arrival_date.isoformat(),
-            }
-            for order in outstanding_orders
-        ]
-    )
-
-
-def write_snapshot_row(
-    snapshot_writer: csv.DictWriter | None,
-    snapshot: DailyStateSnapshot,
-) -> None:
-    if snapshot_writer is None:
-        return
-
-    snapshot_writer.writerow(
-        {
-            "date": snapshot.date.isoformat(),
-            "on_hand_inventory": snapshot.on_hand_inventory,
-            "outstanding_orders": snapshot.outstanding_orders,
-            "total_fulfilled_demand": snapshot.total_fulfilled_demand,
-            "total_unmet_demand": snapshot.total_unmet_demand,
-            "total_holding_cost": snapshot.total_holding_cost,
-            "total_stockout_cost": snapshot.total_stockout_cost,
-            "total_stockout_days": snapshot.total_stockout_days,
-            "demand": snapshot.demand,
-            "fulfilled_demand": snapshot.fulfilled_demand,
-            "unmet_demand": snapshot.unmet_demand,
-            "stockout_day": snapshot.stockout_day,
-        }
-    )
+    metrics = aggregate_final_metrics(state, eval_df)
+    print_final_metrics(metrics)
+    return metrics
 
 
 def receive_scheduled_orders(state: SimulatorState) -> None:
