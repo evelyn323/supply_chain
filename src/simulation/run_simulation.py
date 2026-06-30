@@ -70,7 +70,6 @@ def run_simulation(
     )
 
     # initialize simulator state at first eval_date
-    # TODO: Replace the dummy initializer with the chosen policy-specific rule.
     state = init_simulator_state(history_df, eval_df, config)
     snapshot_writer, snapshot_file = init_snapshot_writer(snapshot_csv_path)
 
@@ -233,8 +232,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--initial-state",
         type=InitialStateOption,
-        default=InitialStateOption.DUMMY,
-        help="Initial-state option to use (dummy)",
+        default=InitialStateOption.PREV_DAY_DEMAND_PLUS_SAFETY_STOCK,
+        help="Initial-state option to use",
     )
     parser.add_argument(
         "--policy",

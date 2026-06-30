@@ -99,7 +99,7 @@ Run the simulator for one saved split:
 python -m src.simulation.run_simulation --item-id FOODS_3_080 --store-id CA_1 --split val
 ```
 
-By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the dummy initial state and dummy policy, and applies the default simulator assumptions.
+By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the previous-day-demand-plus-safety-stock initial state and the dummy policy, and applies the default simulator assumptions.
 
 You can optionally override the split location, output location, selected split, simulator components, and operating assumptions from the CLI:
 
@@ -124,7 +124,7 @@ Valid simulator flag values:
 - `--split`: `train`, `val`, or `test`
 - `--split-dir`: path to the directory containing saved split folders
 - `--output-dir`: path to the directory where daily simulation snapshots should be written
-- `--initial-state`: currently `dummy`
+- `--initial-state`: `dummy` or `prev_day_demand_plus_safety_stock`
 - `--policy`: currently `dummy`
 - `--lead-time-days`: integer
 - `--safety-stock`: numeric value

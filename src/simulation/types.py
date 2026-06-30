@@ -8,6 +8,7 @@ import pandas as pd
 
 class InitialStateOption(str, Enum):
     DUMMY = "dummy"
+    PREV_DAY_DEMAND_PLUS_SAFETY_STOCK = "prev_day_demand_plus_safety_stock"
 
 
 class PolicyOption(str, Enum):
