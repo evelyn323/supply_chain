@@ -60,7 +60,8 @@ More informtion about assumptions and extensions are in the detailed documentati
 - `tests/`: automated tests
 - `data/raw/`: raw downloaded data
 - `data/processed/`: cleaned or transformed data artifacts
-- `notebooks`: exploratory Jupyter notebooks for dataset inspection, EDA, and early prototyping before logic is moved into reusable Python modules
+- `notebooks/eda`: exploratory Jupyter notebooks for dataset inspection and EDA
+- `notebooks/simulation`: exploratory Jupyter notebooks for simulator-output inspection and plotting
 
 ## Setup and Usage
 The project uses a Conda environment defined in [environment.yml](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/environment.yml).
@@ -91,3 +92,41 @@ python -m src.data.build_splits --item-id FOODS_3_080 --store-id CA_1 --val-frac
 ```
 
 This saves `train.csv`, `validation.csv`, and `test.csv` under `data/splits/m5_foods_3_080_ca_1/` by default.
+
+Run the simulator for one saved split:
+
+```bash
+python -m src.simulation.run_simulation --item-id FOODS_3_080 --store-id CA_1 --split val
+```
+
+By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the dummy initial state and dummy policy, and applies the default simulator assumptions.
+
+You can optionally override the split location, output location, selected split, simulator components, and operating assumptions from the CLI:
+
+```bash
+python -m src.simulation.run_simulation \
+  --item-id FOODS_3_080 \
+  --store-id CA_1 \
+  --split test \
+  --split-dir data/splits \
+  --output-dir data/simulation \
+  --initial-state dummy \
+  --policy dummy \
+  --lead-time-days 5 \
+  --safety-stock 40 \
+  --holding-cost 0.10 \
+  --stockout-penalty 2.00
+```
+
+This saves daily simulation snapshots under `data/simulation/m5_foods_3_080_ca_1/` by default.
+
+Valid simulator flag values:
+- `--split`: `train`, `val`, or `test`
+- `--split-dir`: path to the directory containing saved split folders
+- `--output-dir`: path to the directory where daily simulation snapshots should be written
+- `--initial-state`: currently `dummy`
+- `--policy`: currently `dummy`
+- `--lead-time-days`: integer
+- `--safety-stock`: numeric value
+- `--holding-cost`: numeric value
+- `--stockout-penalty`: numeric value

@@ -1,6 +1,7 @@
 data/raw/
 data/processed/
 data/splits/
+data/simulation/
 __pycache__/
 *.py[cod]
 .DS_Store
