@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import pandas as pd
 from pathlib import Path
 
@@ -196,6 +197,18 @@ def get_eligible_history_and_eval(
     return history_df, eval_df.iloc[0:0].copy()
 
 
+def parse_json_object_arg(raw_value: str) -> dict[str, object]:
+    try:
+        parsed_value = json.loads(raw_value)
+    except json.JSONDecodeError as exc:
+        raise argparse.ArgumentTypeError(f"Invalid JSON for policy config: {exc}") from exc
+
+    if not isinstance(parsed_value, dict):
+        raise argparse.ArgumentTypeError("Policy config must be a JSON object")
+
+    return parsed_value
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build saved train, validation, and test splits for one processed SKU series."
@@ -238,8 +251,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy",
         type=PolicyOption,
-        default=PolicyOption.DUMMY,
-        help="Replenishment policy option to use (dummy)",
+        default=PolicyOption.FIXED_QUANTITY_PERIODIC_REORDER,
+        help="Replenishment policy option to use",
+    )
+    parser.add_argument(
+        "--policy-config-json",
+        type=parse_json_object_arg,
+        default=None,
+        help="Optional JSON object with policy-specific config overrides",
     )
     parser.add_argument(
         "--lead-time-days",
@@ -274,7 +293,7 @@ def main() -> None:
     sku = SKU(args.item_id, args.store_id)
     config = SimulationConfig(
         initial_state_config=get_initial_state_config(args.initial_state),
-        policy_config=get_policy_config(args.policy),
+        policy_config=get_policy_config(args.policy, overrides=args.policy_config_json),
         assumptions=SimulationAssumptions(
             lead_time_days=args.lead_time_days,
             safety_stock=args.safety_stock,

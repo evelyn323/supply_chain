@@ -13,6 +13,7 @@ class InitialStateOption(str, Enum):
 
 class PolicyOption(str, Enum):
     DUMMY = "dummy"
+    FIXED_QUANTITY_PERIODIC_REORDER = "fixed_quantity_periodic_reorder"
 
 
 @dataclass
@@ -25,6 +26,7 @@ class InitialStateConfig:
 class PolicyConfig:
     option: PolicyOption
     history_needed: int = 0
+    overrides: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
