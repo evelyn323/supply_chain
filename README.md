@@ -99,7 +99,7 @@ Run the simulator for one saved split:
 python -m src.simulation.run_simulation --item-id FOODS_3_080 --store-id CA_1 --split val
 ```
 
-By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the previous-day-demand-plus-safety-stock initial state and the dummy policy, and applies the default simulator assumptions.
+By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the previous-day-demand-plus-safety-stock initial state and the fixed-quantity periodic reorder policy, and applies the default simulator assumptions. If `--policy-config-json` is omitted, that policy defaults to `fixed_order_quantity=40` and `review_interval_days=7`.
 
 You can optionally override the split location, output location, selected split, simulator components, and operating assumptions from the CLI:
 
@@ -111,21 +111,23 @@ python -m src.simulation.run_simulation \
   --split-dir data/splits \
   --output-dir data/simulation \
   --initial-state dummy \
-  --policy dummy \
+  --policy fixed_quantity_periodic_reorder \
+  --policy-config-json '{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}' \
   --lead-time-days 5 \
   --safety-stock 40 \
   --holding-cost 0.10 \
   --stockout-penalty 2.00
 ```
 
-This saves daily simulation snapshots under `data/simulation/m5_foods_3_080_ca_1/` by default.
+This saves daily simulation snapshots under `data/simulation/m5_foods_3_080_ca_1/<policy>/<assumption_profile>/` by default. The default assumption profile is `default`, for example `data/simulation/m5_foods_3_080_ca_1/fixed_quantity_periodic_reorder/default/val_daily_snapshots.csv`. If you change simulator assumptions for sensitivity analysis, the path uses a deterministic slug such as `lt_3_ss_40_hc_0.1_sp_2`.
 
 Valid simulator flag values:
 - `--split`: `train`, `val`, or `test`
 - `--split-dir`: path to the directory containing saved split folders
 - `--output-dir`: path to the directory where daily simulation snapshots should be written
 - `--initial-state`: `dummy` or `prev_day_demand_plus_safety_stock`
-- `--policy`: currently `dummy`
+- `--policy`: `dummy` or `fixed_quantity_periodic_reorder`
+- `--policy-config-json`: optional JSON object keyed by policy name, such as `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`
 - `--lead-time-days`: integer
 - `--safety-stock`: numeric value
 - `--holding-cost`: numeric value

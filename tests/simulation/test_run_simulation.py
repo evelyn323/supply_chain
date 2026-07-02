@@ -11,12 +11,47 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from src.simulation.initial_state_configs import get_initial_state_config
 from src.simulation.policy_configs import get_policy_config
 from src.simulation.run_simulation import run_simulation
+from src.simulation.util.paths import (
+    build_assumption_profile_slug,
+    build_snapshot_csv_path,
+)
 from src.simulation.types import (
     InitialStateOption,
     PolicyOption,
     SimulationAssumptions,
     SimulationConfig,
 )
+from src.data.types import SKU, DataSplit
+
+
+def test_build_snapshot_csv_path_uses_policy_and_assumption_profile() -> None:
+    sku = SKU("FOODS_3_080", "CA_1")
+
+    default_path = build_snapshot_csv_path(
+        Path("data/simulation"),
+        sku,
+        PolicyOption.FIXED_QUANTITY_PERIODIC_REORDER,
+        SimulationAssumptions(),
+        DataSplit.VAL,
+    )
+    sensitivity_path = build_snapshot_csv_path(
+        Path("data/simulation"),
+        sku,
+        PolicyOption.FIXED_QUANTITY_PERIODIC_REORDER,
+        SimulationAssumptions(lead_time_days=3),
+        DataSplit.VAL,
+    )
+
+    assert default_path == Path(
+        "data/simulation/m5_foods_3_080_ca_1/fixed_quantity_periodic_reorder/default/val_daily_snapshots.csv"
+    )
+    assert sensitivity_path == Path(
+        "data/simulation/m5_foods_3_080_ca_1/fixed_quantity_periodic_reorder/lt_3_ss_40_hc_0.1_sp_2/val_daily_snapshots.csv"
+    )
+
+
+def test_build_assumption_profile_slug_returns_default_for_default_assumptions() -> None:
+    assert build_assumption_profile_slug(SimulationAssumptions()) == "default"
 
 
 def test_run_simulation_dummy_pipeline_smoke(tmp_path) -> None:

@@ -20,6 +20,7 @@ from src.simulation.util.daily import (
     init_snapshot_writer,
     write_snapshot_row,
 )
+from src.simulation.util.paths import build_snapshot_csv_path
 from src.simulation.types import (
     InitialStateOption,
     OutstandingOrder,
@@ -310,10 +311,12 @@ def main() -> None:
     if args.split == DataSplit.TEST:
         history_df = pd.concat([history_df, splits.get(DataSplit.VAL)])
 
-    snapshot_csv_path = (
-        args.output_dir
-        / f"m5_{sku.item_id.lower()}_{sku.store_id.lower()}"
-        / f"{args.split.value}_daily_snapshots.csv"
+    snapshot_csv_path = build_snapshot_csv_path(
+        args.output_dir,
+        sku,
+        args.policy,
+        config.assumptions,
+        args.split,
     )
     run_simulation(history_df, eval_df, config, snapshot_csv_path=snapshot_csv_path)
 
