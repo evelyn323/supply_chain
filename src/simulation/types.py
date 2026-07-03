@@ -14,6 +14,7 @@ class InitialStateOption(str, Enum):
 class PolicyOption(str, Enum):
     DUMMY = "dummy"
     FIXED_QUANTITY_PERIODIC_REORDER = "fixed_quantity_periodic_reorder"
+    FIXED_REORDER_POINT = "fixed_reorder_point"
 
 
 @dataclass

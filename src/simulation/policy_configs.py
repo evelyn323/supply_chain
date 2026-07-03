@@ -29,6 +29,21 @@ def get_policy_config(
                 "review_interval_days": review_interval_days,
             },
         )
+    if option is PolicyOption.FIXED_REORDER_POINT:
+        reorder_point = policy_overrides.get("reorder_point", 40.0)
+        fixed_order_quantity = policy_overrides.get("fixed_order_quantity", 80.0)
+        if reorder_point < 0:
+            raise ValueError("reorder_point must be non-negative")
+        if fixed_order_quantity <= 0:
+            raise ValueError("fixed_order_quantity must be positive")
+        return PolicyConfig(
+            option=option,
+            history_needed=0,
+            overrides={
+                "reorder_point": reorder_point,
+                "fixed_order_quantity": fixed_order_quantity,
+            },
+        )
 
     raise ValueError(f"Unsupported policy option: {option}")
 

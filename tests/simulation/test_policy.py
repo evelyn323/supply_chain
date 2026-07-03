@@ -12,6 +12,7 @@ from src.simulation.policy_configs import get_policy_config
 from src.simulation.types import (
     InitialStateConfig,
     InitialStateOption,
+    OutstandingOrder,
     PolicyOption,
     SimulationAssumptions,
     SimulationConfig,
@@ -67,6 +68,62 @@ def test_fixed_quantity_periodic_reorder_skips_non_review_day() -> None:
     state = SimulatorState(
         current_date=pd.Timestamp("2024-01-07"),
         on_hand_inventory=10.0,
+    )
+
+    order_quantity = decide_replenishment(available_history, state, config)
+
+    assert order_quantity == 0.0
+
+
+def test_fixed_reorder_point_orders_fixed_quantity_below_threshold() -> None:
+    available_history = pd.DataFrame(columns=["date", "demand"])
+    config = SimulationConfig(
+        initial_state_config=InitialStateConfig(option=InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FIXED_REORDER_POINT,
+            overrides={
+                PolicyOption.FIXED_REORDER_POINT.value: {
+                    "reorder_point": 50.0,
+                    "fixed_order_quantity": 80.0,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(),
+    )
+    state = SimulatorState(
+        current_date=pd.Timestamp("2024-01-01"),
+        on_hand_inventory=10.0,
+    )
+
+    order_quantity = decide_replenishment(available_history, state, config)
+
+    assert order_quantity == 80.0
+
+
+def test_fixed_reorder_point_skips_when_inventory_position_meets_threshold() -> None:
+    available_history = pd.DataFrame(columns=["date", "demand"])
+    config = SimulationConfig(
+        initial_state_config=InitialStateConfig(option=InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FIXED_REORDER_POINT,
+            overrides={
+                PolicyOption.FIXED_REORDER_POINT.value: {
+                    "reorder_point": 50.0,
+                    "fixed_order_quantity": 80.0,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(),
+    )
+    state = SimulatorState(
+        current_date=pd.Timestamp("2024-01-01"),
+        on_hand_inventory=10.0,
+        outstanding_orders=[
+            OutstandingOrder(
+                quantity=40.0,
+                arrival_date=pd.Timestamp("2024-01-02"),
+            ),
+        ],
     )
 
     order_quantity = decide_replenishment(available_history, state, config)
