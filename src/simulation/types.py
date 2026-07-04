@@ -15,6 +15,7 @@ class PolicyOption(str, Enum):
     DUMMY = "dummy"
     FIXED_QUANTITY_PERIODIC_REORDER = "fixed_quantity_periodic_reorder"
     FIXED_REORDER_POINT = "fixed_reorder_point"
+    FIXED_TARGET_ORDER_UP_TO = "fixed_target_order_up_to"
 
 
 @dataclass

@@ -314,7 +314,7 @@ def main() -> None:
     snapshot_csv_path = build_snapshot_csv_path(
         args.output_dir,
         sku,
-        args.policy,
+        config.policy_config,
         config.assumptions,
         args.split,
     )

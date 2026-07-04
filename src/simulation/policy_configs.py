@@ -44,6 +44,17 @@ def get_policy_config(
                 "fixed_order_quantity": fixed_order_quantity,
             },
         )
+    if option is PolicyOption.FIXED_TARGET_ORDER_UP_TO:
+        base_target_level = policy_overrides.get("base_target_level", 40.0)
+        if base_target_level < 0:
+            raise ValueError("base_target_level must be non-negative")
+        return PolicyConfig(
+            option=option,
+            history_needed=0,
+            overrides={
+                "base_target_level": base_target_level,
+            },
+        )
 
     raise ValueError(f"Unsupported policy option: {option}")
 

@@ -129,3 +129,57 @@ def test_fixed_reorder_point_skips_when_inventory_position_meets_threshold() -> 
     order_quantity = decide_replenishment(available_history, state, config)
 
     assert order_quantity == 0.0
+
+
+def test_fixed_target_order_up_to_orders_gap_to_target() -> None:
+    available_history = pd.DataFrame(columns=["date", "demand"])
+    config = SimulationConfig(
+        initial_state_config=InitialStateConfig(option=InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FIXED_TARGET_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FIXED_TARGET_ORDER_UP_TO.value: {
+                    "base_target_level": 40.0,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(safety_stock=40.0),
+    )
+    state = SimulatorState(
+        current_date=pd.Timestamp("2024-01-01"),
+        on_hand_inventory=10.0,
+    )
+
+    order_quantity = decide_replenishment(available_history, state, config)
+
+    assert order_quantity == 70.0
+
+
+def test_fixed_target_order_up_to_skips_when_inventory_position_meets_target() -> None:
+    available_history = pd.DataFrame(columns=["date", "demand"])
+    config = SimulationConfig(
+        initial_state_config=InitialStateConfig(option=InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FIXED_TARGET_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FIXED_TARGET_ORDER_UP_TO.value: {
+                    "base_target_level": 40.0,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(safety_stock=40.0),
+    )
+    state = SimulatorState(
+        current_date=pd.Timestamp("2024-01-01"),
+        on_hand_inventory=30.0,
+        outstanding_orders=[
+            OutstandingOrder(
+                quantity=50.0,
+                arrival_date=pd.Timestamp("2024-01-02"),
+            ),
+        ],
+    )
+
+    order_quantity = decide_replenishment(available_history, state, config)
+
+    assert order_quantity == 0.0

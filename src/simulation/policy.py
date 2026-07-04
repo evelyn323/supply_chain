@@ -16,6 +16,8 @@ def decide_replenishment(
         return decide_fixed_quantity_periodic_replenishment(available_history, state, config)
     if config.policy_config.option is PolicyOption.FIXED_REORDER_POINT:
         return decide_fixed_reorder_point_replenishment(state, config)
+    if config.policy_config.option is PolicyOption.FIXED_TARGET_ORDER_UP_TO:
+        return decide_fixed_target_order_up_to_replenishment(state, config)
 
     raise ValueError(f"Unsupported policy option: {config.policy_config.option}")
 
@@ -59,6 +61,22 @@ def decide_fixed_reorder_point_replenishment(
     if get_inventory_position(state) >= reorder_point:
         return 0.0
     return fixed_order_quantity
+
+
+def decide_fixed_target_order_up_to_replenishment(
+    state: SimulatorState,
+    config: SimulationConfig,
+) -> float:
+    base_target_level = config.policy_config.overrides.get("base_target_level")
+
+    if base_target_level is None:
+        raise ValueError("Fixed target order-up-to policy is missing required parameters")
+
+    order_up_to_level = base_target_level + config.assumptions.safety_stock
+    inventory_position = get_inventory_position(state)
+    if inventory_position >= order_up_to_level:
+        return 0.0
+    return order_up_to_level - inventory_position
 
 
 def get_inventory_position(state: SimulatorState) -> float:
