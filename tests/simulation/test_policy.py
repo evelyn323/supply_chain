@@ -183,3 +183,42 @@ def test_fixed_target_order_up_to_skips_when_inventory_position_meets_target() -
     order_quantity = decide_replenishment(available_history, state, config)
 
     assert order_quantity == 0.0
+
+
+def test_forecast_driven_order_up_to_reads_saved_forecast_artifact(tmp_path) -> None:
+    forecast_csv_path = tmp_path / "val_forecasts.csv"
+    pd.DataFrame(
+        {
+            "forecast_origin_date": ["2024-01-03", "2024-01-03"],
+            "target_date": ["2024-01-04", "2024-01-05"],
+            "horizon_day": [1, 2],
+            "predicted_demand": [7.0, 8.0],
+        }
+    ).to_csv(forecast_csv_path, index=False)
+    available_history = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=2, freq="D"),
+            "demand": [3.0, 4.0],
+        }
+    )
+    config = SimulationConfig(
+        initial_state_config=InitialStateConfig(option=InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                    "forecast_name": "naive_last_value",
+                    "forecast_csv_path": str(forecast_csv_path),
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(lead_time_days=2, safety_stock=10.0),
+    )
+    state = SimulatorState(
+        current_date=pd.Timestamp("2024-01-03"),
+        on_hand_inventory=5.0,
+    )
+
+    order_quantity = decide_replenishment(available_history, state, config)
+
+    assert order_quantity == 20.0

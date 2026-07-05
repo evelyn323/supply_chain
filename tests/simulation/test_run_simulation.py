@@ -56,6 +56,21 @@ def test_build_snapshot_csv_path_uses_policy_and_assumption_profile() -> None:
         SimulationAssumptions(),
         DataSplit.VAL,
     )
+    forecast_path = build_snapshot_csv_path(
+        Path("data/simulation"),
+        sku,
+        get_policy_config(
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                    "forecast_name": "naive_last_value",
+                    "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/naive_last_value/default/val_forecasts.csv",
+                }
+            },
+        ),
+        SimulationAssumptions(),
+        DataSplit.VAL,
+    )
 
     assert default_path == Path(
         "data/simulation/m5_foods_3_080_ca_1/fixed_quantity_periodic_reorder/default/val_daily_snapshots.csv"
@@ -65,6 +80,9 @@ def test_build_snapshot_csv_path_uses_policy_and_assumption_profile() -> None:
     )
     assert override_path == Path(
         "data/simulation/m5_foods_3_080_ca_1/fixed_target_order_up_to/base-target-level_80/default/val_daily_snapshots.csv"
+    )
+    assert forecast_path == Path(
+        "data/simulation/m5_foods_3_080_ca_1/forecast_driven_order_up_to/forecast-name_naive-last-value/default/val_daily_snapshots.csv"
     )
 
 
