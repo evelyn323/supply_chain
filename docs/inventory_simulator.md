@@ -20,6 +20,10 @@ For the MVP, each policy may begin simulation only once enough historical demand
 
 The current code keeps a `dummy` initial-state option for smoke testing. The intended MVP initial state sets on-hand inventory to previous-day demand plus safety stock and starts with no outstanding orders.
 
+This startup rule may disadvantage longer-lead-time policies near the beginning of the simulated window because the pipeline begins empty rather than reflecting orders already in transit. The MVP keeps this simpler initialization and uses lead-time sensitivity analysis to check how much this assumption affects results.
+
+A natural extension is to run the simulator through an unscored warm-up period before the validation or test window, for example by starting in train and allowing inventory and outstanding orders to evolve continuously before metric reporting begins. This would preserve the same simulator dynamics while reducing startup artifacts at the scored boundary.
+
 ## Simulator State
 - **On-hand Inventory**
 - **On-order Inventory**
