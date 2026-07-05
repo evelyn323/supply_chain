@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from src.forecasting.types import ForecastOption
 from src.simulation.types import PolicyConfig, PolicyOption
 
 
@@ -53,6 +54,32 @@ def get_policy_config(
             history_needed=0,
             overrides={
                 "base_target_level": base_target_level,
+            },
+        )
+    if option is PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO:
+        forecast_name = policy_overrides.get(
+            "forecast_name",
+            ForecastOption.NAIVE_LAST_VALUE.value,
+        )
+        forecast_csv_path = policy_overrides.get("forecast_csv_path")
+        if forecast_name not in {option.value for option in ForecastOption}:
+            raise ValueError(f"Unsupported forecast_name: {forecast_name}")
+        if forecast_csv_path is None:
+            return PolicyConfig(
+                option=option,
+                history_needed=1,
+                overrides={
+                    "forecast_name": forecast_name,
+                },
+            )
+        if not isinstance(forecast_csv_path, str) or not forecast_csv_path:
+            raise ValueError("forecast_csv_path must be a non-empty string")
+        return PolicyConfig(
+            option=option,
+            history_needed=1,
+            overrides={
+                "forecast_name": forecast_name,
+                "forecast_csv_path": forecast_csv_path,
             },
         )
 

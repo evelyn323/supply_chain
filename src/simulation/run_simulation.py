@@ -11,6 +11,7 @@ from src.simulation.initial_state_configs import get_initial_state_config
 from src.simulation.initial_state import init_simulator_state
 from src.simulation.policy_configs import get_policy_config
 from src.simulation.policy import decide_replenishment
+from src.simulation.util.history import get_available_history
 from src.simulation.util.aggregate import (
     aggregate_final_metrics,
     print_final_metrics,
@@ -121,15 +122,6 @@ def receive_scheduled_orders(state: SimulatorState) -> None:
         else:
             remaining_orders.append(order)
     state.outstanding_orders = remaining_orders
-
-
-def get_available_history(
-    history_df: pd.DataFrame,
-    eval_df: pd.DataFrame,
-    current_date: pd.Timestamp,
-) -> pd.DataFrame:
-    prior_eval_df = eval_df[eval_df["date"] < current_date]
-    return pd.concat([history_df, prior_eval_df], ignore_index=True)
 
 
 def schedule_replenishment(

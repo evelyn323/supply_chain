@@ -35,8 +35,12 @@ def build_policy_config_slug(
 
     slug_parts = []
     for key in sorted(policy_config.overrides):
+        if key.endswith("_path"):
+            continue
         value = policy_config.overrides[key]
         slug_parts.append(f"{format_key_slug(key)}_{format_value_slug(value)}")
+    if not slug_parts:
+        return None
     return "_".join(slug_parts)
 
 
