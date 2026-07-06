@@ -62,7 +62,12 @@ def get_policy_config(
             ForecastOption.NAIVE_LAST_VALUE.value,
         )
         forecast_csv_path = policy_overrides.get("forecast_csv_path")
-        if forecast_name not in {option.value for option in ForecastOption}:
+        if not isinstance(forecast_name, str) or not forecast_name:
+            raise ValueError("forecast_name must be a non-empty string")
+        if not any(
+            forecast_name == option.value or forecast_name.startswith(f"{option.value}_")
+            for option in ForecastOption
+        ):
             raise ValueError(f"Unsupported forecast_name: {forecast_name}")
         if forecast_csv_path is None:
             return PolicyConfig(

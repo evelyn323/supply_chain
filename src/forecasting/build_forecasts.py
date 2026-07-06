@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.data.types import DataSplit, SKU
 from src.data.util.split.load import load_splits
+from src.forecasting.moving_average import build_moving_average_forecasts
 from src.forecasting.naive_last_value import build_naive_last_value_forecasts
 from src.forecasting.save_forecasts import build_forecast_csv_path, save_forecasts
 from src.forecasting.types import ForecastOption
@@ -56,6 +57,12 @@ def parse_args() -> argparse.Namespace:
         default=30,
         help="Maximum forecast horizon in days to save for each forecast origin",
     )
+    parser.add_argument(
+        "--context-window-days",
+        type=int,
+        default=7,
+        help="Trailing history window size for forecasts that use a context window",
+    )
     return parser.parse_args()
 
 
@@ -84,13 +91,22 @@ def main() -> None:
             eval_df=eval_df,
             max_horizon_days=args.max_horizon_days,
         )
+        forecast_name = args.forecast.value
+    elif args.forecast is ForecastOption.MOVING_AVERAGE:
+        forecast_df = build_moving_average_forecasts(
+            history_df=history_df,
+            eval_df=eval_df,
+            max_horizon_days=args.max_horizon_days,
+            context_window_days=args.context_window_days,
+        )
+        forecast_name = f"{args.forecast.value}_{args.context_window_days}"
     else:
         raise ValueError(f"Unsupported forecast option: {args.forecast}")
 
     output_path = build_forecast_csv_path(
         output_dir=args.output_dir,
         sku=sku,
-        forecast_name=args.forecast.value,
+        forecast_name=forecast_name,
         split=args.split,
     )
     save_forecasts(forecast_df, output_path)

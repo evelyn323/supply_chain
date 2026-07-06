@@ -101,6 +101,14 @@ python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 
 
 This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/naive_last_value/default/val_forecasts.csv` by default. Each row stores a forecast origin date, target date, horizon day, and predicted demand so forecast-driven policies can read the saved artifact later.
 
+Build and save a moving-average forecast artifact with a 7-day window:
+
+```bash
+python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 --split val --forecast moving_average --context-window-days 7
+```
+
+This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv` by default.
+
 Run the simulator for one saved split:
 
 ```bash
@@ -137,7 +145,7 @@ python -m src.simulation.run_simulation \
   --store-id CA_1 \
   --split val \
   --policy forecast_driven_order_up_to \
-  --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "naive_last_value", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/naive_last_value/default/val_forecasts.csv"}}'
+  --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}'
 ```
 
 Valid simulator flag values:
@@ -146,7 +154,7 @@ Valid simulator flag values:
 - `--output-dir`: path to the directory where daily simulation snapshots should be written
 - `--initial-state`: `dummy` or `prev_day_demand_plus_safety_stock`
 - `--policy`: `dummy`, `fixed_quantity_periodic_reorder`, `fixed_reorder_point`, `fixed_target_order_up_to`, or `forecast_driven_order_up_to`
-- `--policy-config-json`: optional JSON object keyed by policy name, such as `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`, `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`, `{"fixed_target_order_up_to": {"base_target_level": 40}}`, or `{"forecast_driven_order_up_to": {"forecast_name": "naive_last_value", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/naive_last_value/default/val_forecasts.csv"}}`
+- `--policy-config-json`: optional JSON object keyed by policy name, such as `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`, `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`, `{"fixed_target_order_up_to": {"base_target_level": 40}}`, or `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}`
 - `--lead-time-days`: integer
 - `--safety-stock`: numeric value
 - `--holding-cost`: numeric value
