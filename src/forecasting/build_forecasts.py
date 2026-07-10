@@ -11,6 +11,13 @@ from src.forecasting.moving_average import build_moving_average_forecasts
 from src.forecasting.naive_last_value import build_naive_last_value_forecasts
 from src.forecasting.save_forecasts import build_forecast_csv_path, save_forecasts
 from src.forecasting.types import ForecastOption
+from src.forecasting.xgboost_recursive import (
+    build_xgboost_model_path,
+    build_xgboost_recursive_forecasts,
+    get_xgboost_forecast_name,
+    load_xgboost_metadata,
+    load_xgboost_model,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +45,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("data/forecasts"),
         help="Directory to save forecast artifacts",
+    )
+    parser.add_argument(
+        "--model-dir",
+        type=Path,
+        default=Path("data/models"),
+        help="Directory containing trained XGBoost models",
     )
     parser.add_argument(
         "--split",
@@ -100,6 +113,27 @@ def main() -> None:
             context_window_days=args.context_window_days,
         )
         forecast_name = f"{args.forecast.value}_{args.context_window_days}"
+    elif args.forecast is ForecastOption.XGBOOST_RECURSIVE:
+        model_path = build_xgboost_model_path(
+            model_dir=args.model_dir,
+            sku=sku,
+            context_window_days=args.context_window_days,
+        )
+        model = load_xgboost_model(model_path)
+        metadata = load_xgboost_metadata(model_path)
+        saved_window = metadata.get("context_window_days")
+        if saved_window != args.context_window_days:
+            raise ValueError(
+                "Saved XGBoost model metadata does not match --context-window-days"
+            )
+        forecast_df = build_xgboost_recursive_forecasts(
+            model=model,
+            history_df=history_df,
+            eval_df=eval_df,
+            max_horizon_days=args.max_horizon_days,
+            context_window_days=args.context_window_days,
+        )
+        forecast_name = get_xgboost_forecast_name(args.context_window_days)
     else:
         raise ValueError(f"Unsupported forecast option: {args.forecast}")
 

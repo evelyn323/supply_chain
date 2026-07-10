@@ -3,6 +3,7 @@ data/processed/
 data/splits/
 data/simulation/
 data/forecasts/
+data/models/
 __pycache__/
 *.py[cod]
 .DS_Store

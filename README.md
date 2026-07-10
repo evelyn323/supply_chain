@@ -93,6 +93,9 @@ python -m src.data.build_splits --item-id FOODS_3_080 --store-id CA_1 --val-frac
 
 This saves `train.csv`, `validation.csv`, and `test.csv` under `data/splits/m5_foods_3_080_ca_1/` by default.
 
+### Forecasting Artifacts
+Forecasting artifacts are built and saved separately from simulation runs. The simulator reads saved forecast CSVs for forecast-driven policies rather than training or generating forecasts live.
+
 Build and save naive-last-value forecast artifacts for one split:
 
 ```bash
@@ -109,13 +112,40 @@ python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 
 
 This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv` by default.
 
+Train and save a recursive XGBoost model with a 7-day rolling feature window:
+
+```bash
+python -m src.forecasting.train_xgboost --item-id FOODS_3_080 --store-id CA_1 --context-window-days 7
+```
+
+This saves the model under `data/models/m5_foods_3_080_ca_1/xgboost_recursive_7/default/model.json` by default and uses the validation split for early stopping when enough validation rows are available.
+
+Build and save recursive XGBoost forecast artifacts for one split from the saved model:
+
+```bash
+python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 --split test --forecast xgboost_recursive --context-window-days 7
+```
+
+This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/xgboost_recursive_7/default/test_forecasts.csv` by default. The saved model is reused, while the forecast CSV still stores one predicted demand row per forecast origin date and horizon day.
+
+More detail on the forecast artifact contract and forecast-to-policy boundary is in [docs/demand_forecasting.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md).
+
+### Simulator and Policy Runs
 Run the simulator for one saved split:
 
 ```bash
 python -m src.simulation.run_simulation --item-id FOODS_3_080 --store-id CA_1 --split val
 ```
 
-By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the previous-day-demand-plus-safety-stock initial state and the fixed-quantity periodic reorder policy, and applies the default simulator assumptions. If `--policy-config-json` is omitted, that policy defaults to `fixed_order_quantity=40` and `review_interval_days=7`. The fixed reorder-point policy uses default `reorder_point=40` and `fixed_order_quantity=80`, where the default order quantity is a simple base amount plus the default safety stock. The fixed-target order-up-to policy uses default `base_target_level=40`, and its effective target is `base_target_level + safety_stock`. The forecast-driven order-up-to policy reads a saved forecast artifact and uses forecasted lead-time demand plus safety stock as its target.
+By default, the simulator reads split CSVs from `data/splits`, writes daily snapshots to `data/simulation`, uses the previous-day-demand-plus-safety-stock initial state, runs the fixed-quantity periodic reorder policy, and applies the default simulator assumptions.
+
+Supported policies:
+- `fixed_quantity_periodic_reorder`: orders a fixed quantity on a fixed review interval
+- `fixed_reorder_point`: orders a fixed quantity when inventory position falls below a reorder point
+- `fixed_target_order_up_to`: orders up to `base_target_level + safety_stock`
+- `forecast_driven_order_up_to`: orders up to forecasted lead-time demand plus safety stock using a saved forecast artifact
+
+Default policy settings and parameter details are summarized in [docs/inventory_policies.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_policies.md).
 
 You can optionally override the split location, output location, selected split, simulator components, and operating assumptions from the CLI:
 
@@ -148,13 +178,19 @@ python -m src.simulation.run_simulation \
   --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}'
 ```
 
+Policy config examples:
+- `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`
+- `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`
+- `{"fixed_target_order_up_to": {"base_target_level": 40}}`
+- `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}`
+
 Valid simulator flag values:
 - `--split`: `train`, `val`, or `test`
 - `--split-dir`: path to the directory containing saved split folders
 - `--output-dir`: path to the directory where daily simulation snapshots should be written
 - `--initial-state`: `dummy` or `prev_day_demand_plus_safety_stock`
 - `--policy`: `dummy`, `fixed_quantity_periodic_reorder`, `fixed_reorder_point`, `fixed_target_order_up_to`, or `forecast_driven_order_up_to`
-- `--policy-config-json`: optional JSON object keyed by policy name, such as `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`, `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`, `{"fixed_target_order_up_to": {"base_target_level": 40}}`, or `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}`
+- `--policy-config-json`: optional JSON object keyed by policy name
 - `--lead-time-days`: integer
 - `--safety-stock`: numeric value
 - `--holding-cost`: numeric value

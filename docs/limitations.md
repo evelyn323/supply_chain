@@ -16,3 +16,5 @@ The MVP also does not model price or promotion effects directly inside the simul
 The current simulator starts each run with no outstanding orders. This can disadvantage longer-lead-time policies near the beginning of the evaluation window, so lead-time sensitivity analysis is used to assess how much this startup assumption matters.
 
 A later extension could carry simulator state forward from an unscored train-period warm-up into validation or test so that scored windows begin with a more realistic inventory pipeline.
+
+The current forecast-driven policy aggregates predicted lead-time demand into a single order-up-to target. A later extension could instead project the daily inventory path through the lead-time window and order against the expected arrival-day inventory state. That refinement may be more aligned with the current lost-sales simulator and is a useful future comparison against the simpler forecast-driven rule.
