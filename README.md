@@ -64,6 +64,7 @@ More informtion about assumptions and extensions are in the detailed documentati
 - `notebooks/simulation`: exploratory Jupyter notebooks for simulator-output inspection and plotting
 
 ## Setup and Usage
+### Environment Setup
 The project uses a Conda environment defined in [environment.yml](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/environment.yml).
 
 ```bash
@@ -71,6 +72,7 @@ conda env create -f environment.yml
 conda activate supply-chain
 ```
 
+### Data Preparation
 Generate the processed daily dataset for the MVP SKU:
 
 ```bash
@@ -93,9 +95,10 @@ python -m src.data.build_splits --item-id FOODS_3_080 --store-id CA_1 --val-frac
 
 This saves `train.csv`, `validation.csv`, and `test.csv` under `data/splits/m5_foods_3_080_ca_1/` by default.
 
-### Forecasting Artifacts
+### Forecasting
 Forecasting artifacts are built and saved separately from simulation runs. The simulator reads saved forecast CSVs for forecast-driven policies rather than training or generating forecasts live.
 
+#### Build Forecast Artifacts
 Build and save naive-last-value forecast artifacts for one split:
 
 ```bash
@@ -130,7 +133,17 @@ This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/xgboost_recur
 
 More detail on the forecast artifact contract and forecast-to-policy boundary is in [docs/demand_forecasting.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md).
 
-### Simulator and Policy Runs
+#### Evaluate Forecast Artifacts
+Evaluate one saved forecast CSV with RMSE:
+
+```bash
+python -m src.forecasting.evaluate_forecasts --item-id FOODS_3_080 --store-id CA_1 --split val --forecast-name moving_average_7
+```
+
+This reads `data/forecasts/.../<forecast_name>/default/val_forecasts.csv`, joins forecast `target_date` rows to the realized demand in the requested split, and prints split-level RMSE.
+
+### Simulation
+#### Run the Simulator
 Run the simulator for one saved split:
 
 ```bash
@@ -167,6 +180,7 @@ python -m src.simulation.run_simulation \
 
 This saves daily simulation snapshots under `data/simulation/m5_foods_3_080_ca_1/<policy>/<assumption_profile>/` by default. The default assumption profile is `default`, for example `data/simulation/m5_foods_3_080_ca_1/fixed_quantity_periodic_reorder/default/val_daily_snapshots.csv`. If you change simulator assumptions for sensitivity analysis, the path uses a deterministic slug such as `lt_3_ss_40_hc_0.1_sp_2`. If you use non-default policy overrides, the simulator adds one policy-config folder before the assumption profile, for example `data/simulation/m5_foods_3_080_ca_1/fixed_target_order_up_to/base-target-level_80/default/val_daily_snapshots.csv`.
 
+#### Forecast-Driven Example
 Example forecast-driven simulator run:
 
 ```bash
@@ -178,12 +192,14 @@ python -m src.simulation.run_simulation \
   --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}'
 ```
 
+#### Policy Config Examples
 Policy config examples:
 - `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`
 - `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`
 - `{"fixed_target_order_up_to": {"base_target_level": 40}}`
 - `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}`
 
+#### Simulator Flags
 Valid simulator flag values:
 - `--split`: `train`, `val`, or `test`
 - `--split-dir`: path to the directory containing saved split folders

@@ -74,6 +74,8 @@ The multi-step behavior differs by method:
 ## Forecasting Metrics
 Use RMSE as the main forecast accuracy metric.
 
+Forecast RMSE is evaluated as a separate read-only step from the saved forecast CSV artifact and the realized demand in the requested split.
+
 Forecast bias can be added later as an extension if systematic over- or under-forecasting becomes important to the analysis.
 
 ## Forecast-to-Policy Boundary
