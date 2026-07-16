@@ -7,6 +7,11 @@ import pandas as pd
 
 from src.data.types import DataSplit, SKU
 from src.data.util.split.load import load_splits
+from src.forecasting.chronos2 import (
+    build_chronos2_forecasts,
+    get_chronos2_forecast_name,
+    load_chronos2_pipeline,
+)
 from src.forecasting.moving_average import build_moving_average_forecasts
 from src.forecasting.naive_last_value import build_naive_last_value_forecasts
 from src.forecasting.save_forecasts import build_forecast_csv_path, save_forecasts
@@ -113,6 +118,16 @@ def main() -> None:
             context_window_days=args.context_window_days,
         )
         forecast_name = f"{args.forecast.value}_{args.context_window_days}"
+    elif args.forecast is ForecastOption.CHRONOS2:
+        pipeline = load_chronos2_pipeline()
+        forecast_df = build_chronos2_forecasts(
+            pipeline=pipeline,
+            history_df=history_df,
+            eval_df=eval_df,
+            max_horizon_days=args.max_horizon_days,
+            context_window_days=args.context_window_days,
+        )
+        forecast_name = get_chronos2_forecast_name()
     elif args.forecast is ForecastOption.XGBOOST_RECURSIVE:
         model_path = build_xgboost_model_path(
             model_dir=args.model_dir,

@@ -40,6 +40,11 @@ def get_forecasted_demand(
 ) -> pd.DataFrame:
     forecast_df = load_forecasts(str(forecast_csv_path.resolve()))
     origin_forecast_df = forecast_df[forecast_df["forecast_origin_date"] == forecast_origin_date]
+    if origin_forecast_df.empty:
+        raise ValueError(
+            "Forecast file is missing forecast rows for origin date "
+            f"{forecast_origin_date.date()} at {forecast_csv_path}"
+        )
     date_range_forecast_df = origin_forecast_df[
         (origin_forecast_df["target_date"] >= start_date)
         & (origin_forecast_df["target_date"] <= end_date)

@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.11
+  - pip
   - pandas
   - numpy
   - jupyterlab
@@ -12,3 +13,5 @@ dependencies:
   - pytest
   - scikit-learn
   - xgboost
+  - pip:
+      - chronos-forecasting

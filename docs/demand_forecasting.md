@@ -36,6 +36,18 @@ This method uses:
 - feature: trailing mean over the last `context_window_days`
 - multi-step behavior: the same moving-average value is repeated across all saved horizon days for that origin date
 
+### Chronos2
+Chronos2 is an inference-only forecasting path. It does not train a project-specific model or save local model artifacts before forecast generation.
+
+In the current implementation, the forecast builder loads the pretrained `amazon/chronos-2` pipeline through the Chronos package API, uses the trailing `context_window_days` history available at each forecast origin date as context, and requests the full `--max-horizon-days` forecast directly.
+
+The current MVP flow saves this artifact as `chronos2`.
+
+This method uses:
+- input: trailing `context_window_days` history available at each forecast origin date
+- model: pretrained `Chronos2Pipeline`
+- multi-step behavior: request a direct multi-step forecast up to the required saved horizon, then save the returned horizon rows into the same forecast CSV contract used by the other methods
+
 ### Recursive XGBoost
 The current learned model is a recursive one-step XGBoost regressor. It predicts one next-day demand value at a time, then feeds each prediction back into the history to predict subsequent horizon days.
 
@@ -69,6 +81,7 @@ All current forecast builders save multi-step forecast rows for each forecast or
 The multi-step behavior differs by method:
 - `naive_last_value`: repeats the last observed demand across all horizons
 - `moving_average_*`: repeats the trailing moving average across all horizons
+- `chronos2`: requests a direct multi-step forecast from the pretrained Chronos2 pipeline for each forecast origin date
 - `xgboost_recursive_*`: predicts one step at a time recursively, using earlier predictions to form later-horizon features
 
 ## Forecasting Metrics
