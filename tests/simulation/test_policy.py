@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -222,3 +223,62 @@ def test_forecast_driven_order_up_to_reads_saved_forecast_artifact(tmp_path) -> 
     order_quantity = decide_replenishment(available_history, state, config)
 
     assert order_quantity == 20.0
+
+
+def test_forecast_driven_policy_config_defaults_context_window_days_to_seven() -> None:
+    policy_config = get_policy_config(
+        PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+        overrides={
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                "forecast_name": "moving_average_7",
+                "forecast_csv_path": "data/forecasts/example.csv",
+            }
+        },
+    )
+
+    assert policy_config.history_needed == 7
+    assert policy_config.overrides["context_window_days"] == 7
+
+
+def test_forecast_driven_policy_config_uses_explicit_context_window_days() -> None:
+    policy_config = get_policy_config(
+        PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+        overrides={
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                "forecast_name": "xgboost_recursive_7",
+                "forecast_csv_path": "data/forecasts/example.csv",
+                "context_window_days": 14,
+            }
+        },
+    )
+
+    assert policy_config.history_needed == 28
+
+
+def test_forecast_driven_policy_config_sets_chronos2_history_needed_from_context_window() -> None:
+    policy_config = get_policy_config(
+        PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+        overrides={
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                "forecast_name": "chronos2",
+                "forecast_csv_path": "data/forecasts/example.csv",
+                "context_window_days": 7,
+            }
+        },
+    )
+
+    assert policy_config.history_needed == 7
+
+
+def test_forecast_driven_policy_config_rejects_invalid_context_window_days() -> None:
+    with pytest.raises(ValueError, match="context_window_days must be a positive integer"):
+        get_policy_config(
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                    "forecast_name": "chronos2",
+                    "forecast_csv_path": "data/forecasts/example.csv",
+                    "context_window_days": 0,
+                }
+            },
+        )

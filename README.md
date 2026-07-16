@@ -189,7 +189,7 @@ python -m src.simulation.run_simulation \
   --store-id CA_1 \
   --split val \
   --policy forecast_driven_order_up_to \
-  --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}'
+  --policy-config-json '{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv", "context_window_days": 7}}'
 ```
 
 #### Policy Config Examples
@@ -197,7 +197,7 @@ Policy config examples:
 - `{"fixed_quantity_periodic_reorder": {"fixed_order_quantity": 40, "review_interval_days": 7}}`
 - `{"fixed_reorder_point": {"reorder_point": 50, "fixed_order_quantity": 90}}`
 - `{"fixed_target_order_up_to": {"base_target_level": 40}}`
-- `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv"}}`
+- `{"forecast_driven_order_up_to": {"forecast_name": "moving_average_7", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/moving_average_7/default/val_forecasts.csv", "context_window_days": 7}}`
 
 #### Simulator Flags
 Valid simulator flag values:

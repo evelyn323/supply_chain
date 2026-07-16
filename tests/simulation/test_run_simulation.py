@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -82,7 +83,7 @@ def test_build_snapshot_csv_path_uses_policy_and_assumption_profile() -> None:
         "data/simulation/m5_foods_3_080_ca_1/fixed_target_order_up_to/base-target-level_80/default/val_daily_snapshots.csv"
     )
     assert forecast_path == Path(
-        "data/simulation/m5_foods_3_080_ca_1/forecast_driven_order_up_to/forecast-name_naive-last-value/default/val_daily_snapshots.csv"
+        "data/simulation/m5_foods_3_080_ca_1/forecast_driven_order_up_to/default/val_daily_snapshots.csv"
     )
 
 
@@ -157,3 +158,86 @@ def test_run_simulation_dummy_pipeline_smoke(tmp_path) -> None:
         == snapshots["demand"]
     ).all()
     assert (snapshots["on_hand_inventory"] >= 0).all()
+
+
+def test_run_simulation_shifts_eval_window_for_xgboost_history_requirement(tmp_path) -> None:
+    history_df = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=10, freq="D"),
+            "demand": [5.0] * 10,
+        }
+    )
+    eval_df = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-11", periods=19, freq="D"),
+            "demand": [6.0] * 19,
+        }
+    )
+    forecast_csv_path = tmp_path / "xgboost_val_forecasts.csv"
+    pd.DataFrame(
+        {
+            "forecast_origin_date": ["2024-01-28", "2024-01-28", "2024-01-29", "2024-01-29"],
+            "target_date": ["2024-01-29", "2024-01-30", "2024-01-30", "2024-01-31"],
+            "horizon_day": [1, 2, 1, 2],
+            "predicted_demand": [7.0, 7.0, 7.0, 7.0],
+        }
+    ).to_csv(forecast_csv_path, index=False)
+    config = SimulationConfig(
+        initial_state_config=get_initial_state_config(InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                    "forecast_name": "xgboost_recursive_7",
+                    "forecast_csv_path": str(forecast_csv_path),
+                    "context_window_days": 7,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(lead_time_days=2, safety_stock=0.0),
+    )
+
+    metrics = run_simulation(history_df, eval_df, config)
+
+    assert metrics.eval_start_date == pd.Timestamp("2024-01-29")
+
+
+def test_run_simulation_raises_when_forecast_rows_are_missing_after_history_shift(tmp_path) -> None:
+    history_df = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=10, freq="D"),
+            "demand": [5.0] * 10,
+        }
+    )
+    eval_df = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-11", periods=20, freq="D"),
+            "demand": [6.0] * 20,
+        }
+    )
+    forecast_csv_path = tmp_path / "chronos_val_forecasts.csv"
+    pd.DataFrame(
+        {
+            "forecast_origin_date": ["2024-01-17"],
+            "target_date": ["2024-01-18"],
+            "horizon_day": [1],
+            "predicted_demand": [7.0],
+        }
+    ).to_csv(forecast_csv_path, index=False)
+    config = SimulationConfig(
+        initial_state_config=get_initial_state_config(InitialStateOption.DUMMY),
+        policy_config=get_policy_config(
+            PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO,
+            overrides={
+                PolicyOption.FORECAST_DRIVEN_ORDER_UP_TO.value: {
+                    "forecast_name": "chronos2",
+                    "forecast_csv_path": str(forecast_csv_path),
+                    "context_window_days": 7,
+                }
+            },
+        ),
+        assumptions=SimulationAssumptions(lead_time_days=2, safety_stock=0.0),
+    )
+
+    with pytest.raises(ValueError, match="Forecast file is missing forecast rows for origin date"):
+        run_simulation(history_df, eval_df, config)

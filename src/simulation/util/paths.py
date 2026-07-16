@@ -30,11 +30,13 @@ def build_policy_config_slug(
     policy_config: PolicyConfig,
 ) -> str | None:
     default_policy_config = get_policy_config(policy_config.option)
-    if policy_config.overrides == default_policy_config.overrides:
+    if _filter_slug_overrides(policy_config.overrides) == _filter_slug_overrides(
+        default_policy_config.overrides
+    ):
         return None
 
     slug_parts = []
-    for key in sorted(policy_config.overrides):
+    for key in sorted(_filter_slug_overrides(policy_config.overrides)):
         if key.endswith("_path"):
             continue
         value = policy_config.overrides[key]
@@ -57,6 +59,12 @@ def build_assumption_profile_slug(
         f"_hc_{format_numeric_slug(assumptions.holding_cost)}"
         f"_sp_{format_numeric_slug(assumptions.stockout_penalty)}"
     )
+
+
+def _filter_slug_overrides(
+    overrides: dict[str, object],
+) -> dict[str, object]:
+    return {key: value for key, value in overrides.items() if not key.endswith("_path")}
 
 
 def format_numeric_slug(value: float) -> str:
