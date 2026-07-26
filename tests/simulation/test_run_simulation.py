@@ -176,10 +176,16 @@ def test_run_simulation_shifts_eval_window_for_xgboost_history_requirement(tmp_p
     forecast_csv_path = tmp_path / "xgboost_val_forecasts.csv"
     pd.DataFrame(
         {
-            "forecast_origin_date": ["2024-01-28", "2024-01-28", "2024-01-29", "2024-01-29"],
-            "target_date": ["2024-01-29", "2024-01-30", "2024-01-30", "2024-01-31"],
-            "horizon_day": [1, 2, 1, 2],
-            "predicted_demand": [7.0, 7.0, 7.0, 7.0],
+            "forecast_origin_date": [
+                "2024-01-28", "2024-01-28", "2024-01-28",
+                "2024-01-29", "2024-01-29", "2024-01-29",
+            ],
+            "target_date": [
+                "2024-01-28", "2024-01-29", "2024-01-30",
+                "2024-01-29", "2024-01-30", "2024-01-31",
+            ],
+            "horizon_day": [1, 2, 3, 1, 2, 3],
+            "predicted_demand": [7.0, 7.0, 7.0, 7.0, 7.0, 7.0],
         }
     ).to_csv(forecast_csv_path, index=False)
     config = SimulationConfig(
@@ -219,7 +225,7 @@ def test_run_simulation_raises_when_forecast_rows_are_missing_after_history_shif
     pd.DataFrame(
         {
             "forecast_origin_date": ["2024-01-17"],
-            "target_date": ["2024-01-18"],
+            "target_date": ["2024-01-17"],
             "horizon_day": [1],
             "predicted_demand": [7.0],
         }

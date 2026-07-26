@@ -37,6 +37,12 @@ def test_build_moving_average_forecasts_uses_trailing_window_mean() -> None:
         pd.Timestamp("2024-01-05"),
         pd.Timestamp("2024-01-05"),
     ]
+    assert forecast_df["target_date"].tolist() == [
+        pd.Timestamp("2024-01-04"),
+        pd.Timestamp("2024-01-05"),
+        pd.Timestamp("2024-01-05"),
+        pd.Timestamp("2024-01-06"),
+    ]
     assert forecast_df["predicted_demand"].tolist() == [5.0, 5.0, 7.0, 7.0]
 
 

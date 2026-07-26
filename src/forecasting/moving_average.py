@@ -37,7 +37,7 @@ def build_moving_average_forecasts(
             forecast_rows.append(
                 {
                     "forecast_origin_date": forecast_origin_date,
-                    "target_date": forecast_origin_date + pd.Timedelta(days=horizon_day),
+                    "target_date": forecast_origin_date + pd.Timedelta(days=horizon_day - 1),
                     "horizon_day": horizon_day,
                     "predicted_demand": moving_average_demand,
                 }

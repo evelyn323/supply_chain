@@ -190,10 +190,10 @@ def test_forecast_driven_order_up_to_reads_saved_forecast_artifact(tmp_path) -> 
     forecast_csv_path = tmp_path / "val_forecasts.csv"
     pd.DataFrame(
         {
-            "forecast_origin_date": ["2024-01-03", "2024-01-03"],
-            "target_date": ["2024-01-04", "2024-01-05"],
-            "horizon_day": [1, 2],
-            "predicted_demand": [7.0, 8.0],
+            "forecast_origin_date": ["2024-01-03", "2024-01-03", "2024-01-03"],
+            "target_date": ["2024-01-03", "2024-01-04", "2024-01-05"],
+            "horizon_day": [1, 2, 3],
+            "predicted_demand": [6.0, 7.0, 8.0],
         }
     ).to_csv(forecast_csv_path, index=False)
     available_history = pd.DataFrame(

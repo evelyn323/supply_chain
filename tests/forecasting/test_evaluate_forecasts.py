@@ -19,7 +19,7 @@ def test_compute_rmse_scores_forecast_rows_with_matching_actual_dates() -> None:
     forecast_df = pd.DataFrame(
         {
             "forecast_origin_date": ["2024-01-01", "2024-01-02", "2024-01-02"],
-            "target_date": ["2024-01-02", "2024-01-03", "2024-01-04"],
+            "target_date": ["2024-01-01", "2024-01-02", "2024-01-03"],
             "horizon_day": [1, 1, 2],
             "predicted_demand": [12.0, 13.0, 20.0],
         }
@@ -28,7 +28,7 @@ def test_compute_rmse_scores_forecast_rows_with_matching_actual_dates() -> None:
     rmse, num_scored_rows = compute_rmse(actual_df, forecast_df)
 
     assert num_scored_rows == 2
-    assert math.isclose(rmse, math.sqrt(2.5))
+    assert math.isclose(rmse, math.sqrt(22.5))
 
 
 def test_load_actual_and_forecast_data_reads_saved_forecast_csv_for_requested_split(tmp_path) -> None:
@@ -66,7 +66,7 @@ def test_load_actual_and_forecast_data_reads_saved_forecast_csv_for_requested_sp
     save_forecasts(
         pd.DataFrame(
             {
-                "forecast_origin_date": ["2024-01-02", "2024-01-03"],
+                "forecast_origin_date": ["2024-01-03", "2024-01-04"],
                 "target_date": ["2024-01-03", "2024-01-04"],
                 "horizon_day": [1, 1],
                 "predicted_demand": [6.0, 8.0],

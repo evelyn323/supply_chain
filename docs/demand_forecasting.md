@@ -14,6 +14,8 @@ Each row stores:
 - `horizon_day`
 - `predicted_demand`
 
+Under the current repository-wide timing convention, `forecast_origin_date = t` means `horizon_day = 1` predicts `target_date = t`, `horizon_day = 2` predicts `t+1`, and so on.
+
 The simulator later reads these saved rows for the chosen policy and sums the relevant future dates over the lead-time window.
 
 ## Current Forecast Methods

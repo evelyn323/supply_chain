@@ -288,7 +288,7 @@ def build_xgboost_recursive_forecasts(
 
         recursive_history = available_history[["date", "demand"]].copy()
         for horizon_day in range(1, max_horizon_days + 1):
-            target_date = forecast_origin_date + pd.Timedelta(days=horizon_day)
+            target_date = forecast_origin_date + pd.Timedelta(days=horizon_day - 1)
             feature_row = _build_recursive_feature_row(
                 observed_df=recursive_history,
                 target_date=target_date,

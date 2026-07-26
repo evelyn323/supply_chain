@@ -131,10 +131,10 @@ def test_build_xgboost_recursive_forecasts_rolls_predictions_forward() -> None:
         pd.Timestamp("2024-02-06"),
     ]
     assert forecast_df["target_date"].tolist() == [
+        pd.Timestamp("2024-02-05"),
+        pd.Timestamp("2024-02-06"),
         pd.Timestamp("2024-02-06"),
         pd.Timestamp("2024-02-07"),
-        pd.Timestamp("2024-02-07"),
-        pd.Timestamp("2024-02-08"),
     ]
     assert forecast_df["predicted_demand"].tolist() == [36.0, 37.0, 37.0, 38.0]
 
