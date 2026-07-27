@@ -14,7 +14,12 @@ SPLIT = "val"
 ANALYSIS_NAME = "docs_mvp"
 ANALYSIS_DIR = Path("data/analysis")
 
-FORECAST_METHODS = [("naive_last_value", None), ("moving_average", 7)]
+FORECAST_METHODS = [
+    {"forecast": "naive_last_value", "context_window_days": None, "artifact_name": "naive_last_value"},
+    {"forecast": "moving_average", "context_window_days": 7, "artifact_name": "moving_average_7"},
+    {"forecast": "xgboost_recursive", "context_window_days": 7, "artifact_name": "xgboost_recursive_7"},
+    {"forecast": "chronos2", "context_window_days": 7, "artifact_name": "chronos2"},
+]
 SENSITIVITY_SCENARIOS = [
     ("baseline", {"lead_time_days": 5, "safety_stock": 40.0, "holding_cost": 0.10, "stockout_penalty": 2.00}),
     ("lead_time_3", {"lead_time_days": 3, "safety_stock": 40.0, "holding_cost": 0.10, "stockout_penalty": 2.00}),
@@ -29,12 +34,6 @@ SENSITIVITY_SCENARIOS = [
 BASELINE_POLICIES = ["fixed_quantity_periodic_reorder", "fixed_reorder_point", "fixed_target_order_up_to"]
 
 
-def build_forecast_name(forecast: str, context_window_days: int | None) -> str:
-    if context_window_days is None:
-        return forecast
-    return f"{forecast}_{context_window_days}"
-
-
 def build_forecast_csv_path(forecast_name: str) -> str:
     return (
         f"data/forecasts/m5_{ITEM_ID.lower()}_{STORE_ID.lower()}/"
@@ -45,32 +44,8 @@ def build_forecast_csv_path(forecast_name: str) -> str:
 def build_command_plan() -> list[dict[str, object]]:
     commands: list[dict[str, object]] = []
 
-    for forecast, context_window_days in FORECAST_METHODS:
-        step_name = build_forecast_name(forecast, context_window_days)
-        command = [
-            PYTHON_BIN,
-            "-m",
-            "src.forecasting.build_forecasts",
-            "--item-id",
-            ITEM_ID,
-            "--store-id",
-            STORE_ID,
-            "--split",
-            SPLIT,
-            "--forecast",
-            forecast,
-        ]
-        if context_window_days is not None:
-            command.extend(["--context-window-days", str(context_window_days)])
-        commands.append(
-            {
-                "step_name": f"build_forecast_{step_name}",
-                "argv": command,
-            }
-        )
-
-    for forecast, context_window_days in FORECAST_METHODS:
-        forecast_name = build_forecast_name(forecast, context_window_days)
+    for forecast_config in FORECAST_METHODS:
+        forecast_name = str(forecast_config["artifact_name"])
         command = [
             PYTHON_BIN,
             "-m",
@@ -105,8 +80,9 @@ def build_command_plan() -> list[dict[str, object]]:
                 }
             )
 
-        for forecast, context_window_days in FORECAST_METHODS:
-            forecast_name = build_forecast_name(forecast, context_window_days)
+        for forecast_config in FORECAST_METHODS:
+            forecast_name = str(forecast_config["artifact_name"])
+            context_window_days = forecast_config["context_window_days"]
             policy_config_json = json.dumps(
                 {
                     "forecast_driven_order_up_to": {
@@ -129,6 +105,23 @@ def build_command_plan() -> list[dict[str, object]]:
             )
 
     return commands
+
+
+def validate_required_forecast_artifacts() -> None:
+    missing_paths: list[str] = []
+    for forecast_config in FORECAST_METHODS:
+        forecast_name = str(forecast_config["artifact_name"])
+        forecast_csv_path = Path(build_forecast_csv_path(forecast_name))
+        if not forecast_csv_path.exists():
+            missing_paths.append(str(forecast_csv_path))
+
+    if missing_paths:
+        missing_list = "\n".join(f"- {path}" for path in missing_paths)
+        raise FileNotFoundError(
+            "Missing required forecast artifacts for MVP analysis. "
+            "Build the saved forecast CSVs before running experiments:\n"
+            f"{missing_list}"
+        )
 
 
 def build_simulation_command(
@@ -178,6 +171,7 @@ def main() -> None:
     output_dir = ANALYSIS_DIR / f"m5_{ITEM_ID.lower()}_{STORE_ID.lower()}" / ANALYSIS_NAME / SPLIT
     logs_dir = output_dir / "command_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
+    validate_required_forecast_artifacts()
 
     manifest_rows: list[dict[str, str]] = []
     for index, step in enumerate(build_command_plan(), start=1):

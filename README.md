@@ -19,7 +19,7 @@ The project consists of five main components:
 ## MVP Scope
 The minimum strong version of the project simulates one M5 `store x item` series under a fixed-lead-time, lost-sales inventory simulator with fixed holding cost and stockout penalty assumptions.
 
-The MVP compares a fixed-quantity periodic reorder naive baseline, a fixed reorder-point policy, an order-up-to policy with a fixed target, and a forecast-driven order-up-to policy using at least naive last value and moving average forecasts.
+The MVP compares a fixed-quantity periodic reorder naive baseline, a fixed reorder-point policy, an order-up-to policy with a fixed target, and a forecast-driven order-up-to policy using naive last value, moving average, recursive XGBoost, and Chronos2 forecasts.
 
 Sensitivity analysis varies fixed lead time, safety stock, stockout penalty, and holding cost.
 
@@ -133,6 +133,22 @@ This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/xgboost_recur
 
 More detail on the forecast artifact contract and forecast-to-policy boundary is in [docs/demand_forecasting.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md).
 
+Build and save a Chronos2 forecast artifact with a 7-day context window:
+
+```bash
+python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 --split val --forecast chronos2 --context-window-days 7
+```
+
+This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/chronos2/default/val_forecasts.csv` by default.
+
+Build and save recursive XGBoost forecast artifacts for the validation split from the saved model:
+
+```bash
+python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 --split val --forecast xgboost_recursive --context-window-days 7
+```
+
+This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/xgboost_recursive_7/default/val_forecasts.csv` by default.
+
 #### Evaluate Forecast Artifacts
 Evaluate one saved forecast CSV with RMSE:
 
@@ -141,6 +157,15 @@ python -m src.forecasting.evaluate_forecasts --item-id FOODS_3_080 --store-id CA
 ```
 
 This reads `data/forecasts/.../<forecast_name>/default/val_forecasts.csv`, joins forecast `target_date` rows to the realized demand in the requested split, and prints split-level RMSE.
+
+### Experiments
+The MVP experiment runner expects all forecast artifacts to be built ahead of time. It evaluates the saved forecast CSVs, runs the full sensitivity sweep across all policies, and writes reproducible analysis outputs under `data/analysis/`.
+
+Run the full MVP analysis after building the required forecast artifacts:
+
+```bash
+python -m src.experiments.run_mvp_analysis
+```
 
 ### Simulation
 #### Run the Simulator
