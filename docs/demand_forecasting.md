@@ -96,4 +96,4 @@ Forecast bias can be added later as an extension if systematic over- or under-fo
 ## Forecast-to-Policy Boundary
 Forecasts determine expected future demand, but the simulator remains responsible for converting those saved predictions into replenishment decisions.
 
-The forecast-driven inventory policy reads a saved forecast artifact, selects the rows matching the current simulation date, and aggregates the relevant target dates over the lead-time window. Policy behavior is documented in [inventory_policies.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_policies.md).
+The forecast-driven inventory policy reads a saved forecast artifact, selects the rows matching the current simulation date, and aggregates the relevant target dates over the lead-time window. Policy behavior is documented in [inventory_policies.md](inventory_policies.md).

@@ -5,6 +5,12 @@ This project investigates whether more accurate demand forecasts necessarily lea
 
 It combines demand forecasting with an inventory simulator to compare how different replenishment policies affect service levels and inventory cost.
 
+## Key Results
+- Built an end-to-end forecasting and inventory simulation pipeline on three M5 retail SKU series with smoother, intermittent, and spikier demand patterns.
+- Showed that the best-RMSE forecast model, `xgboost_recursive_7`, did not always produce the best downstream inventory outcome, demonstrating that forecast accuracy alone is not enough to judge operational value.
+- Found that forecast-driven replenishment was the lowest-cost policy for the smoother and intermittent SKUs, but a simple fixed target order-up-to policy remained best for the spikier SKU.
+- Confirmed the pattern with sensitivity analysis across 9 operating scenarios per SKU by varying lead time, safety stock, holding cost, and stockout penalty.
+
 ## Problem Statement
 Does better demand forecasting necessarily lead to better inventory decisions?
 
@@ -16,10 +22,10 @@ The project consists of five main components:
 4. **Inventory Policy Comparisons**: Compare inventory policies using cost and service metrics.
 5. **Sensitivity Analysis**: Test how results change under different lead times, safety-stock levels, and stockout penalties.
 
-## MVP Scope
-The minimum strong version of the project simulates one M5 `store x item` series under a fixed-lead-time, lost-sales inventory simulator with fixed holding cost and stockout penalty assumptions.
+## Current Scope
+The current project scope simulates a small set of M5 `store x item` series with different demand patterns under a fixed-lead-time, lost-sales inventory simulator with fixed holding cost and stockout penalty assumptions.
 
-The MVP compares a fixed-quantity periodic reorder naive baseline, a fixed reorder-point policy, an order-up-to policy with a fixed target, and a forecast-driven order-up-to policy using naive last value, moving average, recursive XGBoost, and Chronos2 forecasts.
+The current analysis compares three SKUs with smoother, intermittent, and spikier demand behavior. It evaluates a fixed-quantity periodic reorder naive baseline, a fixed reorder-point policy, an order-up-to policy with a fixed target, and a forecast-driven order-up-to policy using naive last value, moving average, recursive XGBoost, and Chronos2 forecasts.
 
 Sensitivity analysis varies fixed lead time, safety stock, stockout penalty, and holding cost.
 
@@ -27,7 +33,7 @@ Core evaluation metrics include unit fill rate, stockout days, holding cost, sto
 
 ## Stretch Goals
 - Add richer forecasting models, including models that use price and promotion covariates. For example, the zero-shot `Chronos2` forecasting model.
-- Extend the analysis to 2-3 additional SKUs with different demand patterns.
+- Extend the analysis beyond the current three-SKU set.
 
 ## Out of Scope
 - Supplier capacity constraints
@@ -39,17 +45,17 @@ Core evaluation metrics include unit fill rate, stockout days, holding cost, sto
 - Backorders
 - Multi-store optimization
 
-More informtion about assumptions and extensions are in the detailed documentation files.
+More information about assumptions and extensions is in the detailed documentation files.
 
 ## Documentation
-- [Data Ingestion Pipeline](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/data_ingestion_pipeline.md)
-- [Inventory Simulator](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_simulator.md)
-- [Inventory Policies](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_policies.md)
-- [Demand Forecasting](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md)
-- [Policy Evaluation](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/policy_evaluation.md)
-- [Experiments](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/experiments.md)
-- [Results](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/results.md)
-- [Limitations](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/limitations.md)
+- [Data Ingestion Pipeline](docs/data_ingestion_pipeline.md)
+- [Inventory Simulator](docs/inventory_simulator.md)
+- [Inventory Policies](docs/inventory_policies.md)
+- [Demand Forecasting](docs/demand_forecasting.md)
+- [Policy Evaluation](docs/policy_evaluation.md)
+- [Experiments](docs/experiments.md)
+- [Results](docs/results.md)
+- [Limitations](docs/limitations.md)
 
 ## Repository Structure
 - `src/data/`: data loading, validation, and preprocessing
@@ -65,7 +71,7 @@ More informtion about assumptions and extensions are in the detailed documentati
 
 ## Setup and Usage
 ### Environment Setup
-The project uses a Conda environment defined in [environment.yml](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/environment.yml).
+The project uses a Conda environment defined in [environment.yml](environment.yml).
 
 ```bash
 conda env create -f environment.yml
@@ -73,7 +79,7 @@ conda activate supply-chain
 ```
 
 ### Data Preparation
-Generate the processed daily dataset for the MVP SKU:
+Generate the processed daily dataset for one SKU:
 
 ```bash
 python -m src.data.build_processed --item-id FOODS_3_080 --store-id CA_1
@@ -131,7 +137,7 @@ python -m src.forecasting.build_forecasts --item-id FOODS_3_080 --store-id CA_1 
 
 This saves forecast rows under `data/forecasts/m5_foods_3_080_ca_1/xgboost_recursive_7/default/test_forecasts.csv` by default. The saved model is reused, while the forecast CSV still stores one predicted demand row per forecast origin date and horizon day.
 
-More detail on the forecast artifact contract and forecast-to-policy boundary is in [docs/demand_forecasting.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md).
+More detail on the forecast artifact contract and forecast-to-policy boundary is in [docs/demand_forecasting.md](docs/demand_forecasting.md).
 
 Build and save a Chronos2 forecast artifact with a 7-day context window:
 
@@ -159,9 +165,9 @@ python -m src.forecasting.evaluate_forecasts --item-id FOODS_3_080 --store-id CA
 This reads `data/forecasts/.../<forecast_name>/default/val_forecasts.csv`, joins forecast `target_date` rows to the realized demand in the requested split, and prints split-level RMSE.
 
 ### Experiments
-The MVP experiment runner expects all forecast artifacts to be built ahead of time. It evaluates the saved forecast CSVs, runs the full sensitivity sweep across all policies, and writes reproducible analysis outputs under `data/analysis/`.
+The experiment runner expects all forecast artifacts to be built ahead of time. It evaluates the saved forecast CSVs, runs the full sensitivity sweep across all policies, and writes reproducible analysis outputs under `data/analysis/`.
 
-Run the full MVP analysis after building the required forecast artifacts:
+Run the full analysis after building the required forecast artifacts:
 
 ```bash
 python -m src.experiments.run_mvp_analysis
@@ -183,7 +189,7 @@ Supported policies:
 - `fixed_target_order_up_to`: orders up to `base_target_level + safety_stock`
 - `forecast_driven_order_up_to`: orders up to forecasted lead-time demand plus safety stock using a saved forecast artifact
 
-Default policy settings and parameter details are summarized in [docs/inventory_policies.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/inventory_policies.md).
+Default policy settings and parameter details are summarized in [docs/inventory_policies.md](docs/inventory_policies.md).
 
 You can optionally override the split location, output location, selected split, simulator components, and operating assumptions from the CLI:
 

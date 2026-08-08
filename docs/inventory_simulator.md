@@ -5,7 +5,7 @@
 | --- | --- | --- | --- |
 | Time unit | 1 day | None | Matches the daily granularity of the M5 demand data. |
 | Demand input | Observed daily sales | None | Treat demand as exogenous. Observed sales may censor true demand during stockouts. |
-| SKU scope | One `store x item` series | Optional stretch to a small multi-SKU set | In M5, each row is store-specific. |
+| SKU scope | Small set of `store x item` series | None | In M5, each row is store-specific. |
 | Stockout model | Lost sales | None | No backorders in the MVP. |
 | Lead time | 5 days | 3, 5, 7 days | Fixed within a simulation run. |
 | Initial inventory | Initialize at previous-day demand plus safety stock, with no outstanding orders | None | Uses only prior information while avoiding an empty starting pipeline. |

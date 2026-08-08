@@ -40,21 +40,15 @@ The data is from the M5 Forecasting Kaggle competition [github link](https://git
 ## Exploratory Data Analysis
 - **Demand Distributions**
 - Daily demand is analyzed at the `store x item` level after reshaping M5 sales into long format.
-- The MVP SKU `FOODS_3_080` at `CA_1` has moderate daily demand and very few zero-sales days, while the stretch SKUs provide more intermittent or spiky comparison cases.
+- `FOODS_3_080` at `CA_1` has moderate daily demand and very few zero-sales days, while the other two selected SKUs provide more intermittent or spiky comparison cases.
 - **Trend and Seasonality**
 - Daily line plots are used to inspect broad movement over time and visible short-cycle variation in each selected series.
 - Calendar fields and weekly prices are merged into the daily series so that seasonality, event effects, and price-based extensions remain available for later forecasting work.
-- **Zero-demand Periods**
-- Zero-demand frequency is used as one of the main criteria for contrasting SKU behavior.
-- `FOODS_3_080` at `CA_1` has very few zero-sales days, while `FOODS_3_234` at `WI_2` has a substantially higher zero-demand share.
-- **Demand Variability**
-- Demand variability is assessed through daily plots and summary statistics such as average demand, zero-demand share, and spike size.
-- `HOUSEHOLD_1_474` at `TX_2` is retained as a stretch SKU because it shows larger spikes than the MVP series.
+
 - **SKU Selection or Segmentation**
-- SKU selection emphasizes full-history availability, continuity of activity, and contrasting demand patterns rather than random sampling.
+- SKU selection emphasizes full-history availability, continuity of activity, and contrasting demand patterns.
 - Late-introduction series with long leading zero stretches are treated carefully because they may reflect assortment timing rather than true intermittent demand.
-- **MVP SKU**
-`FOODS_3_080` at store `CA_1` is used as the MVP series. It has a full history, very few zero-sales days, and moderate daily volume, making it a clean single-SKU starting point for forecasting and inventory simulation.
-- **Stretch SKUs**
-`FOODS_3_234` at `WI_2` is considered as an intermittent-demand stretch SKU because it has a substantially higher share of zero-sales days than the MVP series.
-`HOUSEHOLD_1_474` at `TX_2` is used as a spikier stretch SKU because it has larger demand spikes and offers a contrasting demand pattern outside the main food example.
+- **Selected SKUs**
+`FOODS_3_080` at store `CA_1` has a full history, very few zero-sales days, and moderate daily volume, making it the smoother comparison series.
+`FOODS_3_234` at `WI_2` is included as an intermittent-demand SKU because it has a substantially higher share of zero-sales days than `FOODS_3_080`.
+`HOUSEHOLD_1_474` at `TX_2` is included as a spikier SKU because it has larger demand spikes and offers a contrasting demand pattern outside the main food example.

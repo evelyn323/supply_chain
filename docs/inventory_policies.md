@@ -37,7 +37,7 @@ The current forecast-driven policy is designed to consume any saved forecast art
 
 This keeps forecasting and simulation separate. The simulator does not train models or generate predictions during a simulation run. It only reads a saved forecast artifact through `forecast_csv_path`.
 
-Forecast-method details, including how `moving_average_7` and `xgboost_recursive_7` are constructed, are documented in [demand_forecasting.md](/Users/evelynchou/Desktop/School/Personal_Projects/supply_chain/docs/demand_forecasting.md).
+Forecast-method details, including how `moving_average_7` and `xgboost_recursive_7` are constructed, are documented in [demand_forecasting.md](demand_forecasting.md).
 
 ### Forecast Artifact Examples
 - `{"forecast_driven_order_up_to": {"forecast_name": "naive_last_value", "forecast_csv_path": "data/forecasts/m5_foods_3_080_ca_1/naive_last_value/default/val_forecasts.csv"}}`

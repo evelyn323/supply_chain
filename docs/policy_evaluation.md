@@ -15,4 +15,4 @@ Evaluate whether the model with the lowest forecast error also produces the lowe
 - Safety stock: 20, 40, 60 units
 - Stockout penalty: 1.00, 2.00, 5.00 per unmet unit
 - Holding cost: 0.05, 0.10, 0.20 per unit per day
-- Forecast bias or demand volatility (stretch)
+- Forecast bias or demand volatility can be examined as an extension
